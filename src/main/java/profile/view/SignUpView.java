@@ -2,7 +2,6 @@ package profile.view;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -11,9 +10,11 @@ import javax.swing.JTextField;
 import profile.model.Sex;
 import profile.model.UnitSystem;
 
-public class UserSignUp extends JFrame implements ISignUpView {
+/**
+ * Panel-based implementation of the user sign up view 
+ */
+public class SignUpView extends JPanel implements ISignUpView {
 
-    private JPanel signUpPane;
     private JTextField fullNameField;
     private JTextField ageField;
     private JTextField dobField;
@@ -30,15 +31,9 @@ public class UserSignUp extends JFrame implements ISignUpView {
     private Runnable onSubmit;
 
     //constructor
-    public UserSignUp() {
-        setTitle("User Sign Up");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
+    public SignUpView() {
         initializeComponents();
-        setContentPane(signUpPane);
         hookButtons();
-        pack();
-        setLocationRelativeTo(null);
     }
 
     @Override
@@ -78,7 +73,20 @@ public class UserSignUp extends JFrame implements ISignUpView {
 
     @Override
     public void close() {
-        dispose();
+        clearForm();
+    }
+
+    /**
+     * Clears all form fields to their default state.
+     */
+    private void clearForm() {
+        fullNameField.setText("");
+        ageField.setText("");
+        dobField.setText("");
+        heightField.setText("");
+        weightField.setText("");
+        sexCombo.setSelectedIndex(0);
+        unitSystemCombo.setSelectedIndex(0);
     }
 
     //wiring helper
@@ -87,14 +95,13 @@ public class UserSignUp extends JFrame implements ISignUpView {
             if (onSubmit != null)
                 onSubmit.run();
         });
-        cancelButton.addActionListener(e -> dispose());
+        cancelButton.addActionListener(e -> clearForm());
     }
 
     // GUI initialization
     private void initializeComponents() {
-        // Create main panel
-        signUpPane = new JPanel();
-        signUpPane.setLayout(new java.awt.GridBagLayout());
+        // Set layout for the panel
+        setLayout(new java.awt.GridBagLayout());
         java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
         gbc.insets = new java.awt.Insets(5, 5, 5, 5);
 
@@ -128,94 +135,102 @@ public class UserSignUp extends JFrame implements ISignUpView {
 
         // Create buttons
         createProfileButton = new JButton("Create Profile");
-        cancelButton = new JButton("Cancel");
+        cancelButton = new JButton("Clear Form");
+
+        // Add title label
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = java.awt.GridBagConstraints.CENTER;
+        add(new JLabel("<html><h2>Create New Profile</h2></html>"), gbc);
+        gbc.gridwidth = 1; // Reset gridwidth
 
         // Add components to panel
         // FULL-NAME
         gbc.gridx = 0; //column position
-        gbc.gridy = 0; //row position
+        gbc.gridy = 1; //row position
         gbc.anchor = java.awt.GridBagConstraints.WEST; //alignment inside the cell
-        signUpPane.add(new JLabel("Full Name:"), gbc);
+        add(new JLabel("Full Name:"), gbc);
 
         gbc.gridx = 1;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
         gbc.fill = java.awt.GridBagConstraints.HORIZONTAL; //stretch horizontally
-        signUpPane.add(fullNameField, gbc);
+        add(fullNameField, gbc);
 
         //AGE
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
-        signUpPane.add(new JLabel("Age:"), gbc);
+        add(new JLabel("Age:"), gbc);
 
         gbc.gridx = 1;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
         gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        signUpPane.add(ageField, gbc);
+        add(ageField, gbc);
 
         //SEX
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
-        signUpPane.add(new JLabel("Sex:"), gbc);
+        add(new JLabel("Sex:"), gbc);
 
         gbc.gridx = 1;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
         gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        signUpPane.add(sexCombo, gbc);
+        add(sexCombo, gbc);
 
         //DOB
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
-        signUpPane.add(new JLabel("Date of Birth:"), gbc);
+        add(new JLabel("Date of Birth:"), gbc);
 
         gbc.gridx = 1;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
         gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        signUpPane.add(dobField, gbc);
+        add(dobField, gbc);
 
         //UNIT SYSTEM
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
-        signUpPane.add(new JLabel("Unit System:"), gbc);
+        add(new JLabel("Unit System:"), gbc);
 
         gbc.gridx = 1;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
         gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        signUpPane.add(unitSystemCombo, gbc);
+        add(unitSystemCombo, gbc);
 
         //HEIGHT
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
-        signUpPane.add(new JLabel("Height:"), gbc);
+        add(new JLabel("Height:"), gbc);
 
         gbc.gridx = 1;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
         gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        signUpPane.add(heightField, gbc);
+        add(heightField, gbc);
 
         //WEIGHT
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
-        signUpPane.add(new JLabel("Weight:"), gbc);
+        add(new JLabel("Weight:"), gbc);
 
         gbc.gridx = 1;
         gbc.anchor = java.awt.GridBagConstraints.WEST;
         gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        signUpPane.add(weightField, gbc);
+        add(weightField, gbc);
 
         // BUTTONS
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(createProfileButton);
         buttonPanel.add(cancelButton);
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridwidth = 2;
         gbc.anchor = java.awt.GridBagConstraints.CENTER;
-        signUpPane.add(buttonPanel, gbc);
+        add(buttonPanel, gbc);
     }
 }

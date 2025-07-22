@@ -1,8 +1,17 @@
 package app;
 
-import shared.navigation.*;
+import javax.swing.JComponent;
 
-import javax.swing.*;
+import profile.presenter.ProfileSelectorPresenter;
+import profile.presenter.UserSignUpPresenter;
+import profile.view.SplashView;
+import profile.view.SignUpView;
+import shared.ServiceFactory;
+import shared.navigation.INavElement;
+import shared.navigation.NavItem;
+import shared.navigation.NavSubMenu;
+import shared.navigation.NavigationPresenter;
+import shared.navigation.NavigationView;
 
 /**
  * Presenter for the main UI of the app.
@@ -20,6 +29,8 @@ public class AppMainPresenter {
         appMainView = new AppMainView(leftNav);
         leftNavPresenter.addNavigationListener((leftNavItem) -> {
             JComponent newView = buildView(leftNavItem);
+            // null when a sub-menu heading is clicked
+            if (newView == null) return;
             appMainView.renderCard(leftNavItem, newView);
         });
     }
@@ -34,18 +45,39 @@ public class AppMainPresenter {
      *
      * @param navItem The navigation item to build the view for.
      * @return The view corresponding to the navigation item wired up to the presenter.
+     * null if a submenu heading is clicked or the specified view does not exist.
      */
     private JComponent buildView(LeftNavItem navItem) {
         return switch (navItem) {
-            case SELECT_PROFILE -> new PlaceholderView("Select Profile View");
+            case SELECT_PROFILE -> {
+                try {
+                    SplashView view = new SplashView();
+                    ProfileSelectorPresenter presenter = new ProfileSelectorPresenter(view, ServiceFactory.getProfileService());
+                    presenter.initialize();
+                    yield view;
+                } catch (Exception e) {
+                    System.err.println("Failed to initialize profile selector: " + e.getMessage());
+                    yield new PlaceholderView("Error loading Profile Selection");
+                }
+            }
             case EDIT_PROFILE -> new PlaceholderView("Edit Profile View");
-            case CREATE_PROFILE -> new PlaceholderView("Create Profile View");
+            case CREATE_PROFILE -> {
+                try {
+                    SignUpView view = new SignUpView();
+                    UserSignUpPresenter presenter = new UserSignUpPresenter(view, ServiceFactory.getProfileService());
+                    presenter.initialize();
+                    yield view;
+                } catch (Exception e) {
+                    System.err.println("Failed to initialize sign up panel: " + e.getMessage());
+                    yield new PlaceholderView("Error loading Create Profile form");
+                }
+            }
             case LOG_MEAL -> new PlaceholderView("Log Meals View");
             case VIEW_MULTIPLE_MEALS -> new PlaceholderView("Multiple Meals View");
             case VIEW_SINGLE_MEAL -> new PlaceholderView("Single Meal View");
             case VIEW_MEAL_STATISTICS -> new PlaceholderView("Meal Statistics View");
             case EXPLORE_INGREDIENT_SWAPS -> new PlaceholderView("Explore Swaps View");
-            default -> new PlaceholderView("Unknown View");
+            default -> null;
         };
     }
 
@@ -112,8 +144,8 @@ public class AppMainPresenter {
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {
             AppMainPresenter presenter = AppMainPresenter.instance();
-            // TEMP: just for testing the navigateTo method works
-            presenter.navigateTo(LeftNavItem.LOG_MEAL);
+            // Start with profile selection
+            presenter.navigateTo(LeftNavItem.SELECT_PROFILE);
         });
     }
 }
