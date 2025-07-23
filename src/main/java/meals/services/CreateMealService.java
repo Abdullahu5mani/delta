@@ -9,6 +9,7 @@ import shared.service_output.ServiceError;
 import shared.service_output.ServiceOutput;
 import shared.utils.DateToString;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -21,6 +22,7 @@ public class CreateMealService {
             "An error occurred when saving the meal to the database";
     private static final String VALIDATE_MEAL_LIMITS_ERROR_TEMPLATE =
             "You can only have one %s per day.";
+    private static final String VALIDATE_NON_EMPTY_MEAL_ERROR = "A meal must have at least one meal item.";
 
     /**
      * Output of the service. Because we are inserting records, we just return a list of errors.
@@ -60,8 +62,8 @@ public class CreateMealService {
     public CreateMealServiceOutput createMeal(Meal meal) {
         try {
             // validation
-            ServiceError validationError = validateLimitsOnTypesOfMealPerDay(meal);
-            if (validationError != null) return new CreateMealServiceOutput(List.of(validationError));
+            List<ServiceError> validationErrors = validate(meal);
+            if(!validationErrors.isEmpty()) return new CreateMealServiceOutput(validationErrors);
             // persist values
             AppBackend.db().execute(new InsertQuery(Meal.getTableName(), meal));
             for (MealItem mealItem : meal.getMealItems()) {
@@ -73,6 +75,20 @@ public class CreateMealService {
         }
         // succeeded so return no errors
         return new CreateMealServiceOutput(Collections.emptyList());
+    }
+
+    /**
+     * Validate the meal data.
+     * @param meal The meal to validate.
+     * @return A list of validation errors for the meal.
+     */
+    private List<ServiceError> validate(Meal meal) throws DatabaseException {
+        List<ServiceError> validationErrors = new ArrayList<>();
+        ServiceError validationError = validateLimitsOnTypesOfMealPerDay(meal);
+        if (validationError != null) validationErrors.add(validationError);
+        validationError = validateAtLeastOneItemPerMeal(meal);
+        if (validationError != null) validationErrors.add(validationError);
+        return validationErrors;
     }
 
     /**
@@ -91,6 +107,15 @@ public class CreateMealService {
             }
         }
         return null;
+    }
+
+    /**
+     * Validates the meal has at least one item.
+     * @param meal The meal to validate.
+     * @return A service error if the meal does not have at least one item, else null.
+     */
+    public ServiceError validateAtLeastOneItemPerMeal(Meal meal) {
+        return meal.getMealItems().isEmpty() ? new ServiceError(VALIDATE_NON_EMPTY_MEAL_ERROR) : null;
     }
 
     /**

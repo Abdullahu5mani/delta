@@ -2,6 +2,8 @@ package app;
 
 import javax.swing.JComponent;
 
+import meals.ui.LogMealPresenter;
+import meals.ui.LogMealView;
 import profile.presenter.EditProfilePresenter;
 import profile.presenter.ProfileSelectorPresenter;
 import profile.presenter.UserSignUpPresenter;
@@ -84,13 +86,23 @@ public class AppMainPresenter {
                     yield new PlaceholderView("Error loading Create Profile form");
                 }
             }
-            case LOG_MEAL -> new PlaceholderView("Log Meals View");
+            case LOG_MEAL -> initializeLogMealView();
             case VIEW_MULTIPLE_MEALS -> new PlaceholderView("Multiple Meals View");
             case VIEW_SINGLE_MEAL -> new PlaceholderView("Single Meal View");
             case VIEW_MEAL_STATISTICS -> new PlaceholderView("Meal Statistics View");
             case EXPLORE_INGREDIENT_SWAPS -> new PlaceholderView("Explore Swaps View");
             default -> null;
         };
+    }
+
+    /**
+     * Creates the view to log meals initialized with the corresponding presenter.
+     * @return The view enabling the user to log meals through the UI.
+     */
+    private LogMealView initializeLogMealView() {
+        LogMealView logMealView = new LogMealView();
+        new LogMealPresenter(logMealView); // register event listeners
+        return logMealView;
     }
 
     /**
