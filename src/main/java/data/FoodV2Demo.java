@@ -23,32 +23,32 @@ public class FoodV2Demo {
             // Get our test foods and create enhanced FoodV2 versions
             System.out.println("📋 Creating enhanced FoodV2 instances...");
             
-            FoodV2 cheeseSouffle = createFoodV2(2, "Cheese souffle", nutrientAmountDAO, nutrientDAO);
-            FoodV2 chopSuey = createFoodV2(4, "Chop suey, with meat, canned", nutrientAmountDAO, nutrientDAO);
-            FoodV2 cornFritter = createFoodV2(6, "Corn fritter", nutrientAmountDAO, nutrientDAO);
-            FoodV2 vinegar = createFoodV2(13, "Vinegar, cider", nutrientAmountDAO, nutrientDAO);
+            FoodV2 chowMein = createFoodV2(5, "Chinese dish, chow mein, chicken", nutrientAmountDAO, nutrientDAO);
+            FoodV2 milk = createFoodV2(61, "Milk, fluid, partly skimmed, 2% M.F.", nutrientAmountDAO, nutrientDAO);
+            FoodV2 friedEgg = createFoodV2(129, "Egg, chicken, whole, cooked, fried", nutrientAmountDAO, nutrientDAO);
+            FoodV2 tortillaChips = createFoodV2(5585, "Snacks, tortilla chips, unsalted", nutrientAmountDAO, nutrientDAO);
             
             // Load nutritional profiles
             System.out.println("\n🔄 Loading nutritional profiles...");
-            cheeseSouffle.loadNutritionalProfile();
-            chopSuey.loadNutritionalProfile();
-            cornFritter.loadNutritionalProfile();
-            vinegar.loadNutritionalProfile();
+            chowMein.loadNutritionalProfile();
+            milk.loadNutritionalProfile();
+            friedEgg.loadNutritionalProfile();
+            tortillaChips.loadNutritionalProfile();
             
             // Demo 1: Display complete nutrition facts labels
             System.out.println("\n" + "=".repeat(60));
             System.out.println("📊 DEMO 1: COMPLETE NUTRITION FACTS LABELS");
             System.out.println("=".repeat(60));
             
-            cheeseSouffle.displayNutritionFacts();
-            cornFritter.displayNutritionFacts();
+            chowMein.displayNutritionFacts();
+            friedEgg.displayNutritionFacts();
             
             // Demo 2: Compare macronutrients across foods
             System.out.println("\n" + "=".repeat(60));
             System.out.println("⚖️  DEMO 2: MACRONUTRIENT COMPARISON");
             System.out.println("=".repeat(60));
             
-            FoodV2[] foods = {cheeseSouffle, chopSuey, cornFritter, vinegar};
+            FoodV2[] foods = {chowMein, milk, friedEgg, tortillaChips};
             
             System.out.printf("%-25s | %-12s | %-12s | %-12s | %-12s\n", 
                 "FOOD", "CALORIES", "PROTEIN (g)", "FAT (g)", "CARBS (g)");
@@ -163,4 +163,4 @@ public class FoodV2Demo {
         if (str.length() <= maxLength) return str;
         return str.substring(0, maxLength - 3) + "...";
     }
-} 
+}

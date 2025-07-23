@@ -210,4 +210,95 @@ public class ProfileServiceImplementorTest {
         service.closeSession();
         assertFalse(service.getCurrentSession().isPresent());
     }
+
+    @Test
+    public void testUpdateUser_WithValidData_ShouldUpdateProfile() {
+        // create and add an existing profile
+        Profile existingProfile = new Profile.Builder()
+                .id(1)
+                .name("John Doe")
+                .age(25)
+                .sex(Sex.MALE)
+                .dateOfBirth(LocalDate.of(1999, 7, 22))
+                .height(175.0)
+                .weight(70.0)
+                .unitSystem(UnitSystem.METRIC)
+                .build();
+        service.add(existingProfile);
+
+        // Prepare updated data
+        var rawInput = new profile.view.ISignUpView.RawInput(
+            "John Smith", 
+            "1999-07-22",
+            "180.0", 
+            "75.0",  
+            "MALE",
+            "METRIC"
+        );
+
+        // When
+        assertDoesNotThrow(() -> {
+            Profile updatedProfile = service.updateUser(1, rawInput);
+            
+            assertEquals(1, updatedProfile.getId());
+            assertEquals("John Smith", updatedProfile.getName());
+            assertEquals(26, updatedProfile.getAge()); // Corrected: 2025 - 1999 = 26 years old
+            assertEquals(Sex.MALE, updatedProfile.getSex());
+            assertEquals(180.0, updatedProfile.getHeight());
+            assertEquals(75.0, updatedProfile.getWeight());
+            assertEquals(UnitSystem.METRIC, updatedProfile.getUnitSystem());
+        });
+    }
+
+    @Test
+    public void testUpdateUser_WithNonExistentProfile_ShouldThrowException() {
+        var rawInput = new profile.view.ISignUpView.RawInput(
+            "John Smith",
+            "1999-07-22",
+            "180.0",
+            "75.0",
+            "MALE",
+            "METRIC"
+        );
+
+        // When/Then
+        assertThrows(IProfileService.ProfileNotFoundException.class, () -> {
+            service.updateUser(999, rawInput);
+        });
+    }
+
+    @Test
+    public void testUpdateUser_WithInvalidData_ShouldThrowValidationException() {
+        // create and add an existing profile
+        Profile existingProfile = new Profile.Builder()
+                .id(1)
+                .name("John Doe")
+                .age(25)
+                .sex(Sex.MALE)
+                .dateOfBirth(LocalDate.of(1999, 7, 22))
+                .height(175.0)
+                .weight(70.0)
+                .unitSystem(UnitSystem.METRIC)
+                .build();
+        service.add(existingProfile);
+
+        // Prepare invalid data (empty name)
+        var rawInput = new profile.view.ISignUpView.RawInput(
+            "", // Invalid empty name
+            "1999-07-22",
+            "180.0",
+            "75.0",
+            "MALE",
+            "METRIC"
+        );
+
+        // then
+        assertThrows(IProfileService.ValidationException.class, () -> {
+            service.updateUser(1, rawInput);
+        });
+    }
+
+    
+
+    
 }

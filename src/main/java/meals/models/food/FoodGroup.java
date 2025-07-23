@@ -37,4 +37,9 @@ public class FoodGroup {
     public int hashCode() {
         return foodGroupId != null ? foodGroupId.hashCode() : 0;
     }
+
+    @Override
+    public String toString() {
+        return "FoodGroup(%s)".formatted(foodGroupName);
+    }
 }

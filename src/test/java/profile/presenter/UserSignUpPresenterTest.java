@@ -46,8 +46,7 @@ class UserSignUpPresenterTest {
         // When
         presenter.initialize();
 
-        // Then - After initialization, view should have a submit callback
-        // We can test this by triggering submit and seeing if it processes
+
         testView.triggerSubmit();
         
         // Should either succeed or show validation errors (depending on form data)
@@ -60,7 +59,6 @@ class UserSignUpPresenterTest {
         presenter.initialize();
         testView.setFormInput(new ISignUpView.RawInput(
             "John Doe",
-            "25", 
             "1999-07-01",  
             "175.0",
             "70.0",
@@ -96,7 +94,6 @@ class UserSignUpPresenterTest {
         presenter.initialize();
         testView.setFormInput(new ISignUpView.RawInput(
             "",  // Empty name
-            "25",
             "1999-07-01",  // Fixed: consistent age/DOB
             "175.0",
             "70.0",
@@ -115,13 +112,12 @@ class UserSignUpPresenterTest {
     }
 
     @Test
-    void handleFormSubmission_WithInvalidAge_ShouldShowError() {
+    void handleFormSubmission_WithInvalidDateFormat_ShouldShowError() {
         // Given
         presenter.initialize();
         testView.setFormInput(new ISignUpView.RawInput(
             "John Doe",
-            "invalid",  // Invalid age
-            "1999-07-01",  
+            "invalid-date",  
             "175.0", 
             "70.0",
             "MALE",
@@ -135,7 +131,8 @@ class UserSignUpPresenterTest {
         assertEquals(0, testService.size());
         assertFalse(testView.isClosed());
         assertNotNull(testView.getLastError());
-        assertTrue(testView.getLastError().contains("Age must be a valid number"));
+        assertTrue(testView.getLastError().contains("Date of birth must be in YYYY-MM-DD format") || 
+                   testView.getLastError().contains("Invalid date format"));
     }
 
     @Test
@@ -144,15 +141,12 @@ class UserSignUpPresenterTest {
         presenter.initialize();
         testView.setFormInput(new ISignUpView.RawInput(
             "John Doe",
-            "25",
             "2030-01-15",  // Future date
             "175.0",
             "70.0",
-            "MALE", 
+            "MALE",
             "METRIC"
-        ));
-
-        // When
+        ));       
         testView.triggerSubmit();
 
         // Then
@@ -179,9 +173,8 @@ class UserSignUpPresenterTest {
 
         presenter.initialize();
         testView.setFormInput(new ISignUpView.RawInput(
-            "john doe",  // Same name, different case - should pass validation but fail duplicate check
-            "25",
-            "1999-07-01",  // Fixed: consistent age/DOB for test input
+            "john doe",  
+            "1999-07-01",  
             "175.0",
             "70.0", 
             "MALE",
@@ -208,8 +201,7 @@ class UserSignUpPresenterTest {
         
         testView.setFormInput(new ISignUpView.RawInput(
             "John Doe",
-            "25",
-            "1999-07-01",  // Fixed: consistent age/DOB
+            "1999-07-01",  
             "175.0",
             "70.0",
             "MALE",
@@ -232,9 +224,8 @@ class UserSignUpPresenterTest {
         presenter.initialize();
         testView.setFormInput(new ISignUpView.RawInput(
             "John Doe",
-            "25",
-            "1999-07-01",  // Fixed: consistent age/DOB
-            "500.0",  // Invalid height for metric (too tall)
+            "1999-07-01", 
+            "500.0",  
             "70.0",
             "MALE",
             "METRIC"
@@ -256,9 +247,8 @@ class UserSignUpPresenterTest {
         presenter.initialize();
         testView.setFormInput(new ISignUpView.RawInput(
             "John Doe",
-            "25",
-            "1999-07-01",  // Fixed: consistent age/DOB
-            "20.0",  // Invalid height for imperial (too tall in feet)
+            "1999-07-01",  
+            "20.0",  
             "150.0",
             "MALE",
             "IMPERIAL"

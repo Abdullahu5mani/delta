@@ -57,13 +57,7 @@ public class ProfileSelectorPresenter {
         try {
             // Open session for selected profile
             profileService.openSession(selectedProfile.getId());
-            
-            // check current active user 
-            System.out.println("Profile selected: " + selectedProfile.getName() + " (ID: " + selectedProfile.getId() + ")");
-            profileService.getCurrentSession().ifPresentOrElse(
-                activeUser -> System.out.println("Current active user: " + activeUser.getName() + " (ID: " + activeUser.getId() + ")"),
-                () -> System.out.println("No active user session found")
-            );
+        
             
             // Navigate to main functionality 
             AppMainPresenter.instance().navigateTo(LeftNavItem.LOG_MEAL);

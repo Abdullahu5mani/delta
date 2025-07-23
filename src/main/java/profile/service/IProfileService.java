@@ -43,6 +43,18 @@ public interface IProfileService {
     Profile createUser(ISignUpView.RawInput rawInput) throws ValidationException, DuplicateUserException;
 
     /**
+     * Updates an existing user profile from raw form input.
+     * Handles all validation and business logic for profile updates.
+     * 
+     * @param profileId The ID of the profile to update
+     * @param rawInput The raw form data from the view
+     * @return The updated profile
+     * @throws ValidationException if validation fails
+     * @throws ProfileNotFoundException if the profile doesn't exist
+     */
+    Profile updateUser(Integer profileId, ISignUpView.RawInput rawInput) throws ValidationException, ProfileNotFoundException;
+
+    /**
      * Validates all profile data fields.
      * 
      * @param rawInput The raw form data to validate
@@ -67,13 +79,12 @@ public interface IProfileService {
     void validateAge(String ageStr) throws ValidationException;
 
     /**
-     * Validates the date of birth field and checks consistency with age.
+     * Validates the date of birth field.
      * 
      * @param dobStr The date of birth string to validate
-     * @param ageStr The age string to check consistency against
      * @throws ValidationException if validation fails
      */
-    void validateDateOfBirth(String dobStr, String ageStr) throws ValidationException;
+    void validateDateOfBirth(String dobStr) throws ValidationException;
 
     /**
      * Validates the height field based on unit system.
@@ -126,6 +137,15 @@ public interface IProfileService {
      */
     class DuplicateUserException extends Exception {
         public DuplicateUserException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Exception thrown when attempting to update a profile that doesn't exist.
+     */
+    class ProfileNotFoundException extends Exception {
+        public ProfileNotFoundException(String message) {
             super(message);
         }
     }

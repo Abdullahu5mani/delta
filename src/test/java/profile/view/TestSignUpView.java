@@ -11,10 +11,8 @@ public class TestSignUpView implements ISignUpView {
     private boolean closed = false;
 
     public TestSignUpView() {
-        // Default test data
         this.formInput = new RawInput(
             "John Doe",
-            "25",
             "1999-07-01",
             "175.0",
             "70.0",

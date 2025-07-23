@@ -141,6 +141,35 @@ public class TestProfileService implements IProfileService {
         return shouldThrowException;
     }
 
+    @Override
+    public Profile updateUser(Integer profileId, ISignUpView.RawInput rawInput) throws ValidationException, ProfileNotFoundException {
+        // Check if profile exists
+        if (!profiles.containsKey(profileId)) {
+            throw new ProfileNotFoundException("Profile with ID " + profileId + " not found");
+        }
+        
+        // Validate the input data
+        validateProfileData(rawInput);
+        
+        // Create updated profile
+        Profile updatedProfile = createProfile(rawInput);
+        
+        Profile profileWithId = new Profile.Builder()
+            .id(profileId)
+            .name(updatedProfile.getName())
+            .age(updatedProfile.getAge()) 
+            .sex(updatedProfile.getSex())
+            .dateOfBirth(updatedProfile.getDateOfBirth())
+            .height(updatedProfile.getHeight())
+            .weight(updatedProfile.getWeight())
+            .unitSystem(updatedProfile.getUnitSystem())
+            .build();
+        
+        profiles.put(profileId, profileWithId);
+        
+        
+        return profileWithId;
+    }
 
     @Override
     public Profile createUser(ISignUpView.RawInput rawInput) throws ValidationException, DuplicateUserException {
@@ -184,9 +213,9 @@ public class TestProfileService implements IProfileService {
     }
 
     @Override
-    public void validateDateOfBirth(String dobStr, String ageStr) throws ValidationException {
+    public void validateDateOfBirth(String dobStr) throws ValidationException {
         ProfileServiceImplementor tempService = new ProfileServiceImplementor(new TestUserRepository());
-        tempService.validateDateOfBirth(dobStr, ageStr);
+        tempService.validateDateOfBirth(dobStr);
     }
 
     @Override
@@ -210,9 +239,12 @@ public class TestProfileService implements IProfileService {
     @Override
     public Profile createProfile(ISignUpView.RawInput rawInput) throws ValidationException {
         try {
-            int age = Integer.parseInt(rawInput.age().trim());
             String formattedDob = formatDateString(rawInput.dob().trim());
             LocalDate dateOfBirth = LocalDate.parse(formattedDob, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            
+            // Calculate age from date of birth (same logic as main service)
+            int calculatedAge = java.time.Period.between(dateOfBirth, LocalDate.now()).getYears();
+            
             double height = Double.parseDouble(rawInput.height().trim());
             double weight = Double.parseDouble(rawInput.weight().trim());
             Sex sex = Sex.valueOf(rawInput.sex().toUpperCase());
@@ -220,7 +252,7 @@ public class TestProfileService implements IProfileService {
             
             return new Profile.Builder()
                     .name(rawInput.fullName().trim())
-                    .age(age)
+                    .age(calculatedAge) 
                     .sex(sex)
                     .dateOfBirth(dateOfBirth)
                     .height(height)

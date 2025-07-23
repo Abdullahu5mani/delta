@@ -2,10 +2,12 @@ package app;
 
 import javax.swing.JComponent;
 
+import profile.presenter.EditProfilePresenter;
 import profile.presenter.ProfileSelectorPresenter;
 import profile.presenter.UserSignUpPresenter;
-import profile.view.SplashView;
+import profile.view.EditProfileView;
 import profile.view.SignUpView;
+import profile.view.SplashView;
 import shared.ServiceFactory;
 import shared.navigation.INavElement;
 import shared.navigation.NavItem;
@@ -60,7 +62,17 @@ public class AppMainPresenter {
                     yield new PlaceholderView("Error loading Profile Selection");
                 }
             }
-            case EDIT_PROFILE -> new PlaceholderView("Edit Profile View");
+            case EDIT_PROFILE -> {
+                try {
+                    EditProfileView view = new EditProfileView();
+                    EditProfilePresenter presenter = new EditProfilePresenter(view, ServiceFactory.getProfileService());
+                    presenter.initialize();
+                    yield view;
+                } catch (Exception e) {
+                    System.err.println("Failed to initialize edit profile: " + e.getMessage());
+                    yield new PlaceholderView("Error loading Edit Profile form");
+                }
+            }
             case CREATE_PROFILE -> {
                 try {
                     SignUpView view = new SignUpView();

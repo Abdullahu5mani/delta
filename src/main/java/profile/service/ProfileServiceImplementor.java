@@ -85,10 +85,40 @@ public class ProfileServiceImplementor implements IProfileService {
     }
 
     @Override
+    public Profile updateUser(Integer profileId, ISignUpView.RawInput rawInput) throws ValidationException, ProfileNotFoundException {
+        // validate that the profile exists
+        if (!getById(profileId).isPresent()) {
+            throw new ProfileNotFoundException("Profile with ID " + profileId + " not found");
+        }
+        
+        // Validate the input data
+        validateProfileData(rawInput);
+        
+        // Create updated profile with calculated age from DOB
+        Profile updatedProfile = createProfile(rawInput);
+        
+        // Create final profile with the existing ID
+        Profile profileWithId = new Profile.Builder()
+            .id(profileId)
+            .name(updatedProfile.getName())
+            .age(updatedProfile.getAge()) 
+            .sex(updatedProfile.getSex())
+            .dateOfBirth(updatedProfile.getDateOfBirth())
+            .height(updatedProfile.getHeight())
+            .weight(updatedProfile.getWeight())
+            .unitSystem(updatedProfile.getUnitSystem())
+            .build();
+        
+        update(profileWithId);
+        
+        
+        return profileWithId;
+    }
+
+    @Override
     public void validateProfileData(ISignUpView.RawInput rawInput) throws ValidationException {
         validateRequiredFields(rawInput);
-        validateAge(rawInput.age());
-        validateDateOfBirth(rawInput.dob(), rawInput.age());
+        validateDateOfBirth(rawInput.dob()); 
         validateHeight(rawInput.height(), rawInput.unitSystem());
         validateWeight(rawInput.weight(), rawInput.unitSystem());
         validateSex(rawInput.sex());
@@ -124,8 +154,14 @@ public class ProfileServiceImplementor implements IProfileService {
         }
     }
 
+    /**
+     * Validates the date of birth field.
+     * 
+     * @param dobStr The date of birth string to validate
+     * @throws ValidationException if validation fails
+     */
     @Override
-    public void validateDateOfBirth(String dobStr, String ageStr) throws ValidationException {
+    public void validateDateOfBirth(String dobStr) throws ValidationException {
         if (dobStr == null || dobStr.trim().isEmpty()) {
             throw new ValidationException("Date of birth is required (YYYY-MM-DD format)");
         }
@@ -142,17 +178,10 @@ public class ProfileServiceImplementor implements IProfileService {
                 throw new ValidationException("Date of birth cannot be before 1900");
             }
             
-            // Check age consistency
-            if (ageStr != null && !ageStr.trim().isEmpty()) {
-                try {
-                    int calculatedAge = java.time.Period.between(dateOfBirth, LocalDate.now()).getYears();
-                    int providedAge = Integer.parseInt(ageStr.trim());
-                    if (Math.abs(calculatedAge - providedAge) > 1) {
-                        throw new ValidationException("Age (" + providedAge + ") doesn't match date of birth (calculated age: " + calculatedAge + ")");
-                    }
-                } catch (NumberFormatException e) {
-                    // Age validation will be handled separately
-                }
+            // Validate that calculated age is reasonable
+            int calculatedAge = calculateAgeFromDateOfBirth(dateOfBirth);
+            if (calculatedAge < 0 || calculatedAge > 150) {
+                throw new ValidationException("Calculated age (" + calculatedAge + ") is not reasonable");
             }
             
         } catch (DateTimeParseException e) {
@@ -228,9 +257,12 @@ public class ProfileServiceImplementor implements IProfileService {
     @Override
     public Profile createProfile(ISignUpView.RawInput rawInput) throws ValidationException {
         try {
-            int age = Integer.parseInt(rawInput.age().trim());
             String formattedDob = formatDateString(rawInput.dob().trim());
             LocalDate dateOfBirth = LocalDate.parse(formattedDob, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            
+            // Calculate age from date of birth 
+            int calculatedAge = calculateAgeFromDateOfBirth(dateOfBirth);
+            
             double height = Double.parseDouble(rawInput.height().trim());
             double weight = Double.parseDouble(rawInput.weight().trim());
             Sex sex = Sex.valueOf(rawInput.sex().toUpperCase());
@@ -238,7 +270,7 @@ public class ProfileServiceImplementor implements IProfileService {
             
             return new Profile.Builder()
                     .name(rawInput.fullName().trim())
-                    .age(age)
+                    .age(calculatedAge) 
                     .sex(sex)
                     .dateOfBirth(dateOfBirth)
                     .height(height)
@@ -249,6 +281,15 @@ public class ProfileServiceImplementor implements IProfileService {
         } catch (Exception e) {
             throw new ValidationException("Error creating profile: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Calculate age from date of birth.
+     * @param dateOfBirth The date of birth
+     * @return The calculated age in years
+     */
+    private int calculateAgeFromDateOfBirth(LocalDate dateOfBirth) {
+        return java.time.Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
 
     /* Helper methods ------------------------------------------------------ */

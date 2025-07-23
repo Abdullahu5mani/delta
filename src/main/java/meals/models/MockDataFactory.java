@@ -66,6 +66,11 @@ public class MockDataFactory {
         );
     }
 
+    public static Food getRandomFood() {
+        List<Food> mockFoods = generateMockFoods();
+        return mockFoods.get(new Random().nextInt(mockFoods.size()));
+    }
+
     public static Meal createMockMeal(MealType mealType) {
         List<MealItem> items = new ArrayList<>();
         for (Food food : generateMockFoods()) {

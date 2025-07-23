@@ -1,5 +1,7 @@
 package profile.view;
 
+import java.time.format.DateTimeFormatter;
+
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -7,13 +9,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import profile.model.Profile;
 import profile.model.Sex;
 import profile.model.UnitSystem;
 
 /**
- * Panel-based implementation of the user sign up view 
+ * Panel-based implementation of the edit profile view 
  */
-public class SignUpView extends JPanel implements ISignUpView {
+public class EditProfileView extends JPanel implements IEditProfileView {
 
     private JTextField fullNameField;
     private JTextField dobField;
@@ -23,14 +26,18 @@ public class SignUpView extends JPanel implements ISignUpView {
     private JComboBox<Sex> sexCombo;
     private JComboBox<UnitSystem> unitSystemCombo;
 
-    private JButton createProfileButton;
+    private JButton updateProfileButton;
     private JButton cancelButton;
 
-    //presenter hook
+    //presenter hooks
     private Runnable onSubmit;
+    private Runnable onCancel;
+    
+    // Store the profile being edited
+    private Profile currentProfile;
 
     //constructor
-    public SignUpView() {
+    public EditProfileView() {
         initializeComponents();
         hookButtons();
     }
@@ -41,8 +48,14 @@ public class SignUpView extends JPanel implements ISignUpView {
     }
 
     @Override
-    public RawInput getFormInput() {
-        return new RawInput(
+    public void setOnCancel(Runnable callback) {
+        this.onCancel = callback;
+    }
+
+    @Override
+    public EditInput getFormInput() {
+        return new EditInput(
+                currentProfile != null ? currentProfile.getId() : null, // id
                 fullNameField.getText().trim(), // fullName
                 dobField.getText().trim(), // dob
                 heightField.getText().trim(), // height
@@ -74,6 +87,19 @@ public class SignUpView extends JPanel implements ISignUpView {
         clearForm();
     }
 
+    @Override
+    public void loadProfileData(Profile profile) {
+        this.currentProfile = profile;
+        if (profile != null) {
+            fullNameField.setText(profile.getName());
+            dobField.setText(profile.getDateOfBirth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            heightField.setText(String.valueOf(profile.getHeight()));
+            weightField.setText(String.valueOf(profile.getWeight()));
+            sexCombo.setSelectedItem(profile.getSex());
+            unitSystemCombo.setSelectedItem(profile.getUnitSystem());
+        }
+    }
+
     /**
      * Clears all form fields to their default state.
      */
@@ -84,22 +110,24 @@ public class SignUpView extends JPanel implements ISignUpView {
         weightField.setText("");
         sexCombo.setSelectedIndex(0);
         unitSystemCombo.setSelectedIndex(0);
+        currentProfile = null;
     }
-
-
 
     //wiring helper
     private void hookButtons() {
-        createProfileButton.addActionListener(e -> {
+        updateProfileButton.addActionListener(e -> {
             if (onSubmit != null)
                 onSubmit.run();
         });
-        cancelButton.addActionListener(e -> clearForm());
+        cancelButton.addActionListener(e -> {
+            if (onCancel != null)
+                onCancel.run();
+        });
     }
 
     // GUI initialization
     private void initializeComponents() {
-        // Set layout for the panel
+        // overall layout
         setLayout(new java.awt.GridBagLayout());
         java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
         gbc.insets = new java.awt.Insets(5, 5, 5, 5);
@@ -130,16 +158,16 @@ public class SignUpView extends JPanel implements ISignUpView {
         dobField.setToolTipText("Enter date in format: YYYY-MM-DD (e.g., 1990-12-25)");
 
         // Create buttons
-        createProfileButton = new JButton("Create Profile");
-        cancelButton = new JButton("Clear Form");
+        updateProfileButton = new JButton("Update Profile");
+        cancelButton = new JButton("Cancel");
 
         // Add title label
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.anchor = java.awt.GridBagConstraints.CENTER;
-        add(new JLabel("<html><h2>Create New Profile</h2></html>"), gbc);
-        gbc.gridwidth = 1; // Reset gridwidth
+        add(new JLabel("<html><h2>Edit Profile</h2></html>"), gbc);
+        gbc.gridwidth = 1; 
 
         // Add components to panel
         // FULL-NAME
@@ -210,7 +238,7 @@ public class SignUpView extends JPanel implements ISignUpView {
 
         // BUTTONS
         JPanel buttonPanel = new JPanel();
-        buttonPanel.add(createProfileButton);
+        buttonPanel.add(updateProfileButton);
         buttonPanel.add(cancelButton);
         gbc.gridx = 0;
         gbc.gridy = 7;

@@ -1,12 +1,21 @@
 package meals.models.meal;
 
+import data.IRecord;
+
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+
+
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 /**
  * Represents a meal logged by the user.
  */
-public class Meal {
+public class Meal implements IRecord {
+    private static final String TABLE = "meals";
+
     /**
      * The different types of meals.
      */
@@ -22,15 +31,40 @@ public class Meal {
             this.label = label;
         }
 
+        /**
+         * Returns the meal type corresponding to the given string.
+         * Necessary to build a meal type from the string representation in the database.
+         *
+         * @param mealType The type of meal in string format.
+         * @return The enum corresponding to this string value.
+         */
+        public static MealType fromString(String mealType) {
+            return switch (mealType) {
+                case "Breakfast" -> MealType.BREAKFAST;
+                case "Lunch" -> MealType.LUNCH;
+                case "Dinner" -> MealType.DINNER;
+                case "Snack" -> MealType.SNACK;
+                default -> null;
+            };
+        }
+
         @Override
         public String toString() {
             return label;
         }
     }
 
+    /**
+     * @return The name of the database table where meals are stored.
+     */
+    public static String getTableName() {
+        return TABLE;
+    }
+
     private final int id;
     private final MealType mealType;
     private final List<MealItem> mealItems;
+    private final Date createdAt;
 
     /**
      * @param id        The unique identifier of the meal.
@@ -41,6 +75,7 @@ public class Meal {
         this.id = id;
         this.mealType = mealType;
         this.mealItems = mealItems;
+        this.createdAt = createdAt;
     }
 
     /**
@@ -62,5 +97,34 @@ public class Meal {
      */
     public List<MealItem> getMealItems() {
         return mealItems;
+    }
+
+    /**
+     * @return The date of the meal.
+     */
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    @Override
+    public String toString() {
+        return "Meal(id: %s, mealType: %s, createdAt: %s)".formatted(id, mealType, createdAt);
+    }
+
+    @Override
+    public Object getValue(String field) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return switch (field) {
+            case "id" -> id;
+            case "meal_type" -> mealType.toString();
+            case "user_id" -> 1; // TO DO: replace with current user
+            case "created_on" -> new SimpleDateFormat("yyyy-MM-dd").format(createdAt);
+            default -> null;
+        };
+    }
+
+    @Override
+    public Collection<String> fieldNames() {
+        return List.of("id", "meal_type", "user_id", "created_on");
     }
 }

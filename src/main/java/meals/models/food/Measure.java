@@ -41,4 +41,9 @@ public class Measure {
     public float getConversionValue() {
         return conversionValue;
     }
+
+    @Override
+    public String toString() {
+        return "Measure(%s)".formatted(name);
+    }
 }
