@@ -111,6 +111,18 @@ public class MySQLDriver implements IDatabaseDriver {
         String tableName = query.getCollectionName();
         StringBuilder selectStatement = new StringBuilder(SELECT_STATEMENT_TEMPLATE.formatted(tableName));
         selectStatement.append(buildWhereClause(query.getFilters()));
+        
+        if (query.getSortColumn() != null) {
+            selectStatement.append(" ORDER BY ").append(query.getSortColumn());
+            if (query.getSortOrder() != null) {
+                selectStatement.append(" ").append(query.getSortOrder() == SortOrder.ASCENDING ? "ASC" : "DESC");
+            }
+        }
+        
+        if (query.getLimit() != null) {
+            selectStatement.append(" LIMIT ").append(query.getLimit());
+        }
+        
         selectStatement.append(SEMICOLON);
         try {
             ResultSet resultSet = connection.createStatement().executeQuery(selectStatement.toString());
@@ -178,10 +190,20 @@ public class MySQLDriver implements IDatabaseDriver {
         for (int i = 0; i < filters.size(); i++) {
             QueryFilter filter = filters.get(i);
             String template = i == 0 ? WHERE_CLAUSE_TEMPLATE : AND_CLAUSE_TEMPLATE;
+            String operator = comparisonOperatorToString(filter.comparison());
+            String value;
+            
+            // Handle FUZZY_SEARCH specially to wrap value with %
+            if (filter.comparison() == Comparison.FUZZY_SEARCH) {
+                value = "'%" + filter.value() + "%'";
+            } else {
+                value = formatSQLValue(filter.value());
+            }
+            
             whereClause.append(template.formatted(
                     filter.field(),
-                    comparisonOperatorToString(filter.comparison()),
-                    formatSQLValue(filter.value())
+                    operator,
+                    value
             ));
         }
         return whereClause.toString();
@@ -241,6 +263,9 @@ public class MySQLDriver implements IDatabaseDriver {
             }
             case LESS_EQUAL -> {
                 return "<=";
+            }
+            case FUZZY_SEARCH -> {
+                return "LIKE";
             }
             default -> {
                 throw new RuntimeException("This operator is not supported by the MySQL driver.");
