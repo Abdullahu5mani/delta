@@ -5,7 +5,6 @@ import data.Comparison;
 import data.DatabaseException;
 import data.IRecord;
 import data.SelectQuery;
-import meals.models.MockDataFactory;
 import meals.models.food.Food;
 import meals.models.food.Measure;
 import meals.models.meal.Meal;
@@ -63,6 +62,7 @@ public class QueryMealsService {
      */
     public QueryMealsServiceOutput getMealsByDate(Date fromDate, Date toDate) {
         try {
+            // TO DO: filter on current user id
             List<IRecord> mealRecords = AppBackend.db().execute(
                     new SelectQuery(Meal.getTableName())
                             .filter("created_on", Comparison.GREATER_EQUAL, DateToString.call(fromDate))
@@ -73,7 +73,7 @@ public class QueryMealsService {
                 meals.add(buildMealForRecord(mealRecord));
             }
             return new QueryMealsServiceOutput(meals, Collections.emptyList());
-        } catch (DatabaseException e) {
+        } catch (DatabaseException | QueryFoodsService.QueryFoodsServiceException e) {
             List<ServiceError> errors = List.of(new ServiceError(DATABASE_EXCEPTION_MESSAGE + e.getMessage()));
             return new QueryMealsServiceOutput(Collections.emptyList(), errors);
         }
@@ -85,7 +85,7 @@ public class QueryMealsService {
      * @return A meal object built using the raw data.
      * @throws DatabaseException Thrown if a database error occurs when querying the database.
      */
-    private static Meal buildMealForRecord(IRecord mealRecord) throws DatabaseException {
+    private static Meal buildMealForRecord(IRecord mealRecord) throws DatabaseException, QueryFoodsService.QueryFoodsServiceException {
         Integer id = (Integer) mealRecord.getValue("id");
         Meal.MealType mealType = Meal.MealType.fromString((String) mealRecord.getValue("meal_type"));
         Date createdAt = (Date) mealRecord.getValue("created_on");
@@ -99,7 +99,7 @@ public class QueryMealsService {
      * @return A meal item built using the raw data.
      * @throws DatabaseException Thrown if a database error occurs when querying the database.
      */
-    private static List<MealItem> buildMealItemsForMeal(IRecord mealRecord) throws DatabaseException {
+    private static List<MealItem> buildMealItemsForMeal(IRecord mealRecord) throws DatabaseException, QueryFoodsService.QueryFoodsServiceException {
         List<IRecord> mealItemRecords = AppBackend.db().execute(
                 new SelectQuery(MealItem.getTableName())
                         .filter("meal_id", Comparison.EQUAL, mealRecord.getValue("id"))
@@ -116,13 +116,19 @@ public class QueryMealsService {
      * @param mealItemRecord The raw data to use to build the meal item.
      * @return The meal item built using the raw data.
      */
-    private static MealItem buildMealItemForRecord(IRecord mealItemRecord) {
+    private static MealItem buildMealItemForRecord(IRecord mealItemRecord) throws QueryFoodsService.QueryFoodsServiceException {
         Integer id = (Integer) mealItemRecord.getValue("id");
-        // TO DO: query using food service
-        Food food = MockDataFactory.getRandomFood();
+        Integer foodId = (Integer) mealItemRecord.getValue("food_id");
+        Food food = QueryFoodsService.instance().findById(foodId);
         Float quantity = (Float) mealItemRecord.getValue("quantity");
-        // TO DO: query using service
-        Measure measure = new Measure(1, "100 Grams", 1.00f);
+        Integer measureId = (Integer) mealItemRecord.getValue("measure_id");
+        // we know the measure belonging to the meal item also belongs to the food,
+        // so we can search the list of measures for the food instead of querying the database
+        Measure measure = food.getPossibleMeasures()
+                .stream()
+                .filter(possibleMeasure -> possibleMeasure.getId() == measureId)
+                .toList()
+                .getFirst();
         return new MealItem(id, food, quantity, measure);
     }
 

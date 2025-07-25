@@ -1,12 +1,23 @@
 package meals.models.food;
 
+import data.IRecord;
+
 /**
  * Represents a food group entity (e.g., "Dairy and Egg Products", "Fruits and fruit juices").
  * This class implements IRecord to integrate with the database layer.
  */
 public class FoodGroup {
+    private static final String TABLE_NAME = "food_groups";
+
     private Integer foodGroupId;
     private String foodGroupName;
+
+    /**
+     * @return The table name for food groups.
+     */
+    public static String getTableName() {
+        return TABLE_NAME;
+    }
 
     /**
      * Constructor for creating a food group with all details.
@@ -16,11 +27,24 @@ public class FoodGroup {
         this.foodGroupName = foodGroupName;
     }
 
-    // Getters and setters
+    /**
+     * @param record The database record to use to construct a food group.
+     */
+    public FoodGroup(IRecord record) {
+        this.foodGroupId = (int) record.getValue("id");
+        this.foodGroupName = (String) record.getValue("name");
+    }
+
+    /**
+     * @return The unique identifier of the food group.
+     */
     public Integer getFoodGroupId() {
         return foodGroupId;
     }
 
+    /**
+     * @return The name of the food group.
+     */
     public String getFoodGroupName() {
         return foodGroupName;
     }

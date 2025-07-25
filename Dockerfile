@@ -11,8 +11,11 @@ WORKDIR /app
 # copy file used by Maven for build
 COPY pom.xml .
 
+# copy script to run as entrypoint
+COPY docker-entrypoint.sh .
+
 # copy source code
 COPY src ./src
 
 # run tests
-ENTRYPOINT ["mvn", "clean", "test"]
+ENTRYPOINT ["sh", "./docker-entrypoint.sh"]

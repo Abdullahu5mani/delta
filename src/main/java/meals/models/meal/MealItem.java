@@ -86,6 +86,7 @@ public class MealItem implements IRecord {
             case "id" -> id;
             case "meal_id" -> parentMeal.getId();
             case "food_id" -> food.getFoodId();
+            case "measure_id" -> selectedMeasure.getId();
             case "quantity" -> quantity;
             default -> null;
         };
@@ -93,6 +94,6 @@ public class MealItem implements IRecord {
 
     @Override
     public Collection<String> fieldNames() {
-        return List.of("id", "meal_id", "food_id", "quantity");
+        return List.of("id", "meal_id", "food_id", "quantity", "measure_id");
     }
 }

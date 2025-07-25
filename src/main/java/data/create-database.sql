@@ -3,121 +3,117 @@ CREATE DATABASE delta_database;
 
 USE delta_database;
 
--- example table for testing
+-- Example table for testing
 CREATE TABLE students
 (
-    id   int PRIMARY KEY AUTO_INCREMENT,
-    name varchar(255)
+    id   INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255)
 );
 
-CREATE TABLE profiles(
-     id            INT PRIMARY KEY AUTO_INCREMENT,
-     full_name     VARCHAR(80) NOT NULL,
-     age           INT         NOT NULL,
-     sex           VARCHAR(10) NOT NULL,
-     dob           DATE        NOT NULL,
-     height        DOUBLE      NOT NULL,
-     weight        DOUBLE      NOT NULL,
-     unit_system   VARCHAR(10) NOT NULL
+-- Represents users of the application
+CREATE TABLE profiles
+(
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    full_name   VARCHAR(80) NOT NULL,
+    age         INT         NOT NULL,
+    sex         VARCHAR(10) NOT NULL,
+    dob         DATE        NOT NULL,
+    height      DOUBLE      NOT NULL,
+    weight      DOUBLE      NOT NULL,
+    unit_system VARCHAR(10) NOT NULL
+);
+
+-- A meal containing multiple items
+CREATE TABLE meals
+(
+    id         INT PRIMARY KEY AUTO_INCREMENT,
+    meal_type  VARCHAR(10),
+    user_id    INT  NOT NULL,
+    created_on DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES profiles (id)
+);
+
+-- One item within a meal
+CREATE TABLE meal_items
+(
+    id         INT PRIMARY KEY AUTO_INCREMENT,
+    meal_id    INT,
+    food_id    INT   NOT NULL,
+    quantity   FLOAT NOT NULL,
+    -- TO DO: disabling NOT NULL check until the create meal service is updated
+    -- to include the measure ID when saving a record to the database
+    measure_id INT,
+    FOREIGN KEY (meal_id) REFERENCES meals (id)
+    -- TO DO: disabling foreign key reference temporarily while using mock food data
+    -- until we finalize foods in database and move off of using mocks entirely
+    -- FOREIGN KEY (food_id) REFERENCES foods(food_id)
 );
 
 -- ======================================
 -- NUTRITION TABLES
 -- ======================================
 
--- Food Groups table (independent entity) - French fields nullable (ignored by Java)
+-- Food Groups table (independent entity)
 CREATE TABLE food_groups
 (
-    FoodGroupID   int PRIMARY KEY,
-    FoodGroupCode int,
-    FoodGroupName varchar(255),
-    FoodGroupNameF varchar(255) DEFAULT NULL  -- Nullable - Java ignores this
+    id   INT PRIMARY KEY,
+    name VARCHAR(255)
 );
 
--- Nutrients table (independent entity) - French fields nullable (ignored by Java)
+-- Nutrients table (independent entity)
 CREATE TABLE nutrients
 (
-    NutrientID       int PRIMARY KEY,
-    NutrientCode     int,
-    NutrientSymbol   varchar(20),
-    NutrientUnit     varchar(20),
-    NutrientName     varchar(255),
-    NutrientNameF    varchar(255) DEFAULT NULL,  -- Nullable - Java ignores this
-    Tagname          varchar(100),
-    NutrientDecimals int
+    id     INT PRIMARY KEY,
+    symbol VARCHAR(20),
+    unit   VARCHAR(20),
+    name   VARCHAR(255)
 );
 
--- Foods table (has foreign key to food_groups) - French fields nullable (ignored by Java)
+-- Foods table (has foreign key to food_groups)
 CREATE TABLE foods
 (
-    FoodID                 int PRIMARY KEY,
-    FoodCode               int,
-    FoodGroupID            int,
-    FoodSourceID           int,
-    FoodDescription        varchar(500),
-    FoodDescriptionF       varchar(500) DEFAULT NULL,  -- Nullable - Java ignores this
-    FoodDateOfEntry        varchar(20) DEFAULT NULL,   -- Nullable - Java ignores this  
-    FoodDateOfPublication  varchar(20) DEFAULT NULL,   -- Nullable - Java ignores this
-    CountryCode            varchar(10),
-    ScientificName         varchar(255),
-    
-    FOREIGN KEY (FoodGroupID) REFERENCES food_groups(FoodGroupID)
+    id            INT PRIMARY KEY,
+    food_group_id INT,
+    description   VARCHAR(500),
+    FOREIGN KEY (food_group_id) REFERENCES food_groups (id)
 );
 
 -- Nutrient Amounts table (junction table - nutritional values per food)
 CREATE TABLE nutrient_amounts
 (
-    FoodID                int,
-    NutrientID           int,
-    NutrientValue        double,
-    NutrientSourceID     int,
-    NutrientDateOfEntry  varchar(20) DEFAULT NULL, -- Nullable - Java ignores this
-    
-    PRIMARY KEY (FoodID, NutrientID),
-    FOREIGN KEY (FoodID) REFERENCES foods(FoodID),
-    FOREIGN KEY (NutrientID) REFERENCES nutrients(NutrientID)
+    food_id        INT,
+    nutrient_id    INT,
+    nutrient_value DOUBLE,
+
+    PRIMARY KEY (food_id, nutrient_id),
+    FOREIGN KEY (food_id) REFERENCES foods (id),
+    FOREIGN KEY (nutrient_id) REFERENCES nutrients (id)
 );
 
+-- Food measurement (ex. "1 Cup")
 CREATE TABLE measures
 (
-    MeasureID           int PRIMARY KEY,
-    MeasureDescription  varchar(255),
-    MeasureDescriptionF varchar(255) DEFAULT NULL,  -- Nullable - Java ignores this
-    CommonName          varchar(255)
+    id          INT PRIMARY KEY,
+    common_name VARCHAR(255)
 );
 
 -- Conversion Factors table (allows converting between different serving sizes)
 CREATE TABLE conversion_factors
 (
-    FoodID                   int,
-    MeasureID               int,
-    ConversionFactorValue   double,
-    ConvFactorDateOfEntry   varchar(20) DEFAULT NULL, -- Nullable - Java ignores this
+    food_id                 INT,
+    measure_id              INT,
+    conversion_factor_value DOUBLE,
 
-    PRIMARY KEY (FoodID, MeasureID),
-    FOREIGN KEY (FoodID) REFERENCES foods(FoodID),
-    FOREIGN KEY (MeasureID) REFERENCES measures(MeasureID)
-);
-  
--- Meal tables
-
-CREATE TABLE meals
-(
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    meal_type VARCHAR(10),
-    user_id INT NOT NULL ,
-    created_on DATE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES profiles(id)
+    PRIMARY KEY (food_id, measure_id),
+    FOREIGN KEY (food_id) REFERENCES foods (id),
+    FOREIGN KEY (measure_id) REFERENCES measures (id)
 );
 
-CREATE TABLE meal_items
-(
-    id int PRIMARY KEY AUTO_INCREMENT,
-    meal_id INT,
-    food_id INT NOT NULL,
-    quantity FLOAT NOT NULL,
-    FOREIGN KEY (meal_id) REFERENCES meals(id)
-    -- TO DO: disabling foreign key reference temporarily while using mock food data
-    -- until we finalize foods in database and move off of using mocks entirely
-    -- FOREIGN KEY (food_id) REFERENCES foods(FoodID)
-);
+-- View to get conversion factors and measure name in single query
+CREATE VIEW conversion_factors_with_measure_details AS
+SELECT cf.food_id AS food_id,
+       cf.measure_id AS measure_id,
+       m.common_name AS measure_name,
+       cf.conversion_factor_value AS conversion_factor_value
+FROM conversion_factors cf
+JOIN measures m ON cf.measure_id = m.id

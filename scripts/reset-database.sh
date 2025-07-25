@@ -26,3 +26,14 @@ else
   echo "An error occurred while seeding the database."
   exit 1
 fi
+
+echo "Step 4: Seed Nutrition Data"
+echo "This may take a while..."
+mvn clean compile exec:java -Dexec.mainClass="csv.LoadNutritionDataService" -e
+if [ $? -eq 0 ]; then
+  echo "Database nutrition data seeded successfully!"
+else
+  echo "An error occurred while seeding the database."
+  echo "You can also run the main method of LoadNutritionDataService directly to load the nutrition data."
+  exit 1
+fi

@@ -5,10 +5,20 @@ package meals.models.food;
  * compare nutritional content to other quantities. For example, how to compare "1 Can" to "500 mL" of Apple Juice.
  */
 public class Measure {
+    private static final String CONVERSION_FACTORS_TABLE_NAME = "conversion_factors";
+    private static final String MEASURES_TABLE_NAME = "measures";
+    private static final String MEASURES_CONVERSION_FACTORS_VIEW_NAME = "conversion_factors_with_measure_details";
 
     private final int id;
     private final String name;
     private final float conversionValue;
+
+    /**
+     * @return The name of the table containing conversion factors and their associated measure name.
+     */
+    public static String getConversionFactorsMeasuresTableName() {
+        return MEASURES_CONVERSION_FACTORS_VIEW_NAME;
+    }
 
     /**
      * @param id              The id of the conversion factor.

@@ -1,12 +1,11 @@
 package meals.ui;
 
 
-import meals.models.MockDataFactory;
 import meals.models.food.Food;
 import meals.models.food.Measure;
 import meals.models.meal.Meal;
+import meals.services.QueryFoodsService;
 import shared.ui.searchable_list.SearchableListView;
-import shared.ui.searchable_list.UIConstants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -99,12 +98,15 @@ public class LogMealView extends JPanel {
      * Helper method to be called in the constructor.
      */
     private void initFoodSearchBox() {
-        // TO DO: use food query service instead of mock food when service implemented
-        // and move this logic to the presenter
+        // TO DO: move this logic to the presenter
         // may need to modify the search box class to support setting the list of items
-        List<Food> foodList = MockDataFactory.generateMockFoods();
-        List<FoodSearchBoxOption> foodSearchBoxOptions = foodList.stream().map(FoodSearchBoxOption::new).toList();
-        foodSearchBox = new SearchableListView<>(foodSearchBoxOptions);
+        try {
+            List<Food> foodList = QueryFoodsService.instance().fetchAll();
+            List<FoodSearchBoxOption> foodSearchBoxOptions = foodList.stream().map(FoodSearchBoxOption::new).toList();
+            foodSearchBox = new SearchableListView<>(foodSearchBoxOptions);
+        } catch (QueryFoodsService.QueryFoodsServiceException e) {
+            showErrorMessage("An error occurred while getting the list of foods: " + e.getMessage());
+        }
     }
 
     /**

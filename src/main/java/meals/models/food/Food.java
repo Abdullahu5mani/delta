@@ -10,11 +10,17 @@ import java.util.Map;
  * Demonstrates the "has-a" relationship where Food can have a FoodGroup.
  */
 public class Food {
+    private static final String TABLE_NAME = "foods";
+
     private Integer foodId;
     private String foodDescription;
     private FoodGroup foodGroup;
     private Map<Nutrient, Float> nutrientAmounts;
     private List<Measure> possibleMeasures;
+
+    public static String getTableName() {
+        return TABLE_NAME;
+    }
 
     /**
      * Constructor with food group (aggregation).
