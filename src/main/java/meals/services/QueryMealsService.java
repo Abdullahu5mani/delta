@@ -87,7 +87,8 @@ public class QueryMealsService {
      */
     private static Meal buildMealForRecord(IRecord mealRecord) throws DatabaseException, QueryFoodsService.QueryFoodsServiceException {
         Integer id = (Integer) mealRecord.getValue("id");
-        Meal.MealType mealType = Meal.MealType.fromString((String) mealRecord.getValue("meal_type"));
+        String mealTypeString = (String) mealRecord.getValue("meal_type");
+        Meal.MealType mealType = Meal.MealType.fromString(mealTypeString);
         Date createdAt = (Date) mealRecord.getValue("created_on");
         List<MealItem> mealItems = buildMealItemsForMeal(mealRecord);
         return new Meal(id, mealType,mealItems, createdAt);

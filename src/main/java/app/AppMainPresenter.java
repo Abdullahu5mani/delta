@@ -4,6 +4,8 @@ import javax.swing.JComponent;
 
 import meals.ui.LogMealPresenter;
 import meals.ui.LogMealView;
+import meals.ui.MealListView;
+import meals.ui.MealListPresenter;
 
 import swaps.ui.SwapsPresenter;
 import swaps.ui.SwapsView;
@@ -93,7 +95,7 @@ public class AppMainPresenter {
                 }
             }
             case LOG_MEAL -> initializeLogMealView();
-            case VIEW_MULTIPLE_MEALS -> new PlaceholderView("Multiple Meals View");
+            case VIEW_MULTIPLE_MEALS -> initializeMealListView();
             case VIEW_SINGLE_MEAL -> new PlaceholderView("Single Meal View");
             case VIEW_MEAL_STATISTICS -> new PlaceholderView("Meal Statistics View");
             case EXPLORE_INGREDIENT_SWAPS -> initializeSwapsView();
@@ -115,6 +117,12 @@ public class AppMainPresenter {
         SwapsView swapsView = new SwapsView(new CreateGoalsView());
         new SwapsPresenter(swapsView); // register action listeners
         return swapsView;
+    }
+
+    private MealListView initializeMealListView() {
+        MealListView mealListView = new MealListView();
+        new MealListPresenter(mealListView);
+        return mealListView;
     }
 
     /**

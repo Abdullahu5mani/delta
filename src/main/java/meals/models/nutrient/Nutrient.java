@@ -49,7 +49,7 @@ public class Nutrient {
         this.nutrientId = (int) record.getValue("id");
         this.nutrientSymbol = (String) record.getValue("symbol");
         this.nutrientUnit = (String) record.getValue("unit");
-        this.nutrientName = (String) record.getValue("unit");
+        this.nutrientName = (String) record.getValue("name");
     }
 
     // Getters and setters

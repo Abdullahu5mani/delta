@@ -44,22 +44,43 @@ public class LogMealPresenter {
      * Handles the logic for creating a meal given the information entered via the UI using the backend service.
      */
     private void createMeal() {
+        System.out.println("🍽️ === STARTING MEAL CREATION ===");
+        
         List<MealItem> mealItems = buildMealItemsFromForm();
         // only support logging meals for the current day
         int randomId = new Random().nextInt(10_000);
         Meal.MealType mealType = view.getSelectedMealType();
         Date today = new Date();
         Meal meal = new Meal(randomId, mealType, mealItems, today);
+        
+        System.out.println("📋 Meal Details:");
+        System.out.println("   🆔 ID: " + randomId);
+        System.out.println("   🍳 Type: " + mealType);
+        System.out.println("   📅 Date: " + today);
+        System.out.println("   🥘 Items: " + mealItems.size());
+        for (int i = 0; i < mealItems.size(); i++) {
+            MealItem item = mealItems.get(i);
+            System.out.println("      " + (i+1) + ". " + item.getFood().getFoodDescription() + 
+                             " (" + item.getQuantity() + " " + item.getSelectedMeasure().getName() + ")");
+        }
+        
+        System.out.println("💾 Saving meal to database...");
         CreateMealService.CreateMealServiceOutput result = CreateMealService.instance().createMeal(meal);
+        
         if (result.ok()) {
+            System.out.println("✅ SUCCESS: Meal created successfully!");
+            System.out.println("🧭 Navigating to meal list view...");
             AppMainPresenter.instance().navigateTo(LeftNavItem.VIEW_MULTIPLE_MEALS);
         } else {
+            System.out.println("❌ FAILED: Meal creation failed with errors:");
+            result.errors().forEach(error -> System.out.println("   - " + error));
             List<String> errors = result.errors()
                     .stream()
                     .map(Object::toString)
                     .toList();
             view.showErrorMessage(String.join("\n", errors));
         }
+        System.out.println("🍽️ === MEAL CREATION COMPLETE ===\n");
     }
 
     /**

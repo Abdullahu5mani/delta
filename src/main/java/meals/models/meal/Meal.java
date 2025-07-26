@@ -39,11 +39,15 @@ public class Meal implements IRecord {
          * @return The enum corresponding to this string value.
          */
         public static MealType fromString(String mealType) {
-            return switch (mealType) {
-                case "Breakfast" -> MealType.BREAKFAST;
-                case "Lunch" -> MealType.LUNCH;
-                case "Dinner" -> MealType.DINNER;
-                case "Snack" -> MealType.SNACK;
+            if (mealType == null) return null;
+            
+            // Make case-insensitive comparison and handle common variations
+            String normalized = mealType.trim().toLowerCase();
+            return switch (normalized) {
+                case "breakfast" -> MealType.BREAKFAST;
+                case "lunch" -> MealType.LUNCH;
+                case "dinner" -> MealType.DINNER;
+                case "snack" -> MealType.SNACK;
                 default -> null;
             };
         }
