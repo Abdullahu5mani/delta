@@ -1,12 +1,16 @@
 package swaps.ui;
 
+import java.awt.CardLayout;
+import java.awt.FlowLayout;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
 import swaps.ui.goals.CreateGoalsView;
 import swaps.ui.select_swap.SelectSwapView;
 import swaps.ui.swap_meal_details.SwapMealDetailsView;
 import swaps.ui.swap_statistics.SwapStatisticsView;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * View that orchestrates the entire workflow for creating, selecting, and applying a swap.
@@ -18,6 +22,7 @@ public class SwapsView extends JPanel {
 
     private final CreateGoalsView createGoalsView;
     private SelectSwapView selectSwapView;
+    private SwapMealDetailsView swapMealDetailsView;
     private CardLayout cardLayout;
     private JPanel cardPanel;
     private JButton nextButton;
@@ -44,7 +49,8 @@ public class SwapsView extends JPanel {
         selectSwapView = new SelectSwapView();
         cardPanel.add(selectSwapView, SwapsPresenter.SELECT_SWAPS_CARD_ID);
         cardPanel.add(new SwapStatisticsView(), SwapsPresenter.SWAP_STATISTICS_CARD_ID);
-        cardPanel.add(new SwapMealDetailsView(), SwapsPresenter.SWAP_MEAL_DETAILS_CARD_ID);
+        swapMealDetailsView = new SwapMealDetailsView();
+        cardPanel.add(swapMealDetailsView, SwapsPresenter.SWAP_MEAL_DETAILS_CARD_ID);
         cardLayout.show(cardPanel, SwapsPresenter.DEFINE_GOALS_CARD_ID);
         this.add(cardPanel);
     }
@@ -113,5 +119,12 @@ public class SwapsView extends JPanel {
      */
     public SelectSwapView getSelectSwapView() {
         return selectSwapView;
+    }
+
+    /**
+     * @return The view where the user can see meal details and nutrition comparison.
+     */
+    public SwapMealDetailsView getSwapMealDetailsView() {
+        return swapMealDetailsView;
     }
 }

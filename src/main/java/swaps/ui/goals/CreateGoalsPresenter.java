@@ -49,4 +49,11 @@ public class CreateGoalsPresenter {
             createGoalsView.setGoal2FormVisibility(createSecondGoal);
         });
     }
+
+    /**
+     * @return Whether the second goal is enabled/visible.
+     */
+    public boolean isSecondGoalEnabled() {
+        return createSecondGoal;
+    }
 }

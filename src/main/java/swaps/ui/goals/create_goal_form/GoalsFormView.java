@@ -1,13 +1,23 @@
 package swaps.ui.goals.create_goal_form;
 
-import meals.models.MockDataFactory;
-import shared.ui.searchable_list.SearchableListView;
-import swaps.ui.goals.create_goal_form.form_fields.*;
-
-import javax.swing.*;
-import java.awt.*;
-
+import java.awt.Color;
+import java.awt.Font;
 import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
+import meals.services.QueryNutrientsService;
+import shared.ui.searchable_list.SearchableListView;
+import swaps.ui.goals.create_goal_form.form_fields.DropdownOptionNutrient;
+import swaps.ui.goals.create_goal_form.form_fields.FormFieldDateRange;
+import swaps.ui.goals.create_goal_form.form_fields.FormFieldGoalDirection;
+import swaps.ui.goals.create_goal_form.form_fields.FormFieldGoalIntensity;
+import swaps.ui.goals.create_goal_form.form_fields.FormFieldGoalType;
+import swaps.ui.goals.create_goal_form.form_fields.FormFieldNutrient;
+import swaps.ui.goals.create_goal_form.form_fields.FormFieldPreciseAmount;
 
 /**
  * The view representing the form for creating a goal.
@@ -17,6 +27,9 @@ public class GoalsFormView extends JPanel {
     private FormFieldNutrient nutrientField;
     private FormFieldPreciseAmount preciseAmountField;
     private FormFieldGoalIntensity intensityField;
+    private FormFieldGoalDirection directionField;
+    private FormFieldDateRange dateRangeField;
+    private SearchableListView<DropdownOptionNutrient> nutrientListView;
 
     /**
      * @param header The header to display for the form.
@@ -34,7 +47,14 @@ public class GoalsFormView extends JPanel {
     private void initLayout(String header) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        this.add(new JLabel(header));
+        
+        // Create styled header label
+        JLabel headerLabel = new JLabel(header);
+        Font originalFont = headerLabel.getFont();
+        Font boldFont = new Font(originalFont.getName(), Font.BOLD, originalFont.getSize() + 4);
+        headerLabel.setFont(boldFont);
+        
+        this.add(headerLabel);
     }
 
     /**
@@ -44,17 +64,33 @@ public class GoalsFormView extends JPanel {
     private void initFormFields() {
         typeField = new FormFieldGoalType();
         this.add(typeField);
-        List<DropdownOptionNutrient> dropdownOptionNutrientList = MockDataFactory
-                .createMockNutrients()
-                .stream()
-                .map(DropdownOptionNutrient::new)
-                .toList();
-        SearchableListView<DropdownOptionNutrient> listView = new SearchableListView<>(dropdownOptionNutrientList);
-        this.add(listView);
+        
+        directionField = new FormFieldGoalDirection();
+        this.add(directionField);
+        
+        // Load nutrients from the database instead of mock data
+        List<DropdownOptionNutrient> dropdownOptionNutrientList;
+        try {
+            dropdownOptionNutrientList = QueryNutrientsService.instance()
+                    .fetchAll()
+                    .stream()
+                    .map(DropdownOptionNutrient::new)
+                    .toList();
+        } catch (QueryNutrientsService.QueryNutrientServiceException e) {
+            // Fallback to empty list if there's an error loading nutrients
+            dropdownOptionNutrientList = List.of();
+        }
+        
+        nutrientListView = new SearchableListView<>(dropdownOptionNutrientList);
+        this.add(nutrientListView);
         preciseAmountField = new FormFieldPreciseAmount();
         this.add(preciseAmountField);
         intensityField = new FormFieldGoalIntensity();
         this.add(intensityField);
+        
+        // Add date range field for selecting meal log dates
+        dateRangeField = new FormFieldDateRange();
+        this.add(dateRangeField);
     }
 
     /**
@@ -85,5 +121,33 @@ public class GoalsFormView extends JPanel {
      */
     public FormFieldGoalIntensity getIntensityField() {
         return intensityField;
+    }
+
+    /**
+     * @return The field for selecting the goal direction (increase/decrease).
+     */
+    public FormFieldGoalDirection getDirectionField() {
+        return directionField;
+    }
+
+    /**
+     * @return The selected nutrient from the searchable list.
+     */
+    public DropdownOptionNutrient getSelectedNutrient() {
+        return nutrientListView.getSelectedItem();
+    }
+
+    /**
+     * @return The field for entering precise amounts.
+     */
+    public FormFieldPreciseAmount getPreciseAmountField() {
+        return preciseAmountField;
+    }
+
+    /**
+     * @return The field for selecting date range for meal logs.
+     */
+    public FormFieldDateRange getDateRangeField() {
+        return dateRangeField;
     }
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Step 1: Create Database"
-mysql -uroot -p < "$(pwd)/src/main/java/data/create-database.sql"
+mysql -uroot -p -h 127.0.0.1 -P 3306 < "$(pwd)/src/main/java/data/create-database.sql"
 if [ $? -eq 0 ]; then
   echo "Database created successfully!"
 else
@@ -10,7 +10,7 @@ else
 fi
 
 echo "Step 2: Create Service Account"
-mysql -uroot -p < "$(pwd)/src/main/java/data/create-service-account.sql"
+mysql -uroot -p -h 127.0.0.1 -P 3306 < "$(pwd)/src/main/java/data/create-service-account.sql"
 if [ $? -eq 0 ]; then
   echo "Database created successfully!"
 else
@@ -19,7 +19,7 @@ else
 fi
 
 echo "Step 3: Seed Database"
-mysql -uroot -p < "$(pwd)/src/main/java/data/seed-database.sql"
+mysql -uroot -p -h 127.0.0.1 -P 3306 < "$(pwd)/src/main/java/data/seed-database.sql"
 if [ $? -eq 0 ]; then
   echo "Database seeded successfully!"
 else
