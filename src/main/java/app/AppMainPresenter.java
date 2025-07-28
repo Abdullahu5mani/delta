@@ -25,6 +25,7 @@ import profile.view.SplashView;
 
 import statistics.presenter.NutrientBreakdownPresenter;
 import statistics.presenter.SwapComparisonPresenter;
+import statistics.presenter.FoodGuideAlignmentPresenter;
 
 import shared.navigation.INavElement;
 import shared.navigation.NavItem;
@@ -80,7 +81,6 @@ public class AppMainPresenter {
                     VIEW_MULTIPLE_MEALS,
                     VIEW_SINGLE_MEAL,
                     VIEW_NUTRIENT_BREAKDOWN,
-                    VIEW_SWAP_COMPARISON,
                     EXPLORE_INGREDIENT_SWAPS -> true;
             default -> false;
         };
@@ -134,9 +134,8 @@ public class AppMainPresenter {
             case VIEW_MULTIPLE_MEALS -> initializeMealListView();
             case VIEW_SINGLE_MEAL -> initializeMealDetailView();
             case VIEW_NUTRIENT_BREAKDOWN -> initializeNutrientBreakdownView();
-            case VIEW_SWAP_COMPARISON -> initializeSwapComparisonView();
+            case VIEW_FOOD_GUIDE_ALIGNMENT -> initializeFoodGuideAlignmentView();
             case EXPLORE_INGREDIENT_SWAPS -> initializeSwapsView();
-
             default -> null;
         };
     }
@@ -182,8 +181,10 @@ public class AppMainPresenter {
      */
     private JComponent initializeNutrientBreakdownView() {
         try {
-            NutrientBreakdownPresenter presenter = new NutrientBreakdownPresenter();
-            return presenter.createNutrientBreakdownUI();
+            statistics.view.NutrientBreakdownView view = new statistics.view.NutrientBreakdownView();
+            NutrientBreakdownPresenter presenter = new NutrientBreakdownPresenter(view, statistics.service.StatisticsService.instance());
+            presenter.initialize();
+            return view.getMainPanel();
         } catch (Exception e) {
             System.err.println("Failed to initialize nutrient breakdown view: " + e.getMessage());
             return new PlaceholderView("Error loading Nutrient Breakdown");
@@ -191,16 +192,16 @@ public class AppMainPresenter {
     }
 
     /**
-     * Creates the view for swap comparison statistics with date selection UI.
-     * @return The panel containing the swap comparison visualization with date controls.
+     * Creates the view for Canada Food Guide alignment analysis with date selection UI.
+     * @return The panel containing the CFG alignment visualization with date controls.
      */
-    private JComponent initializeSwapComparisonView() {
+    private JComponent initializeFoodGuideAlignmentView() {
         try {
-            SwapComparisonPresenter presenter = new SwapComparisonPresenter();
-            return presenter.createSwapComparisonUI();
+            FoodGuideAlignmentPresenter presenter = new FoodGuideAlignmentPresenter();
+            return presenter.createFoodGuideAlignmentUI();
         } catch (Exception e) {
-            System.err.println("Failed to initialize swap comparison view: " + e.getMessage());
-            return new PlaceholderView("Error loading Swap Comparison");
+            System.err.println("Failed to initialize food guide alignment view: " + e.getMessage());
+            return new PlaceholderView("Error loading Food Guide Alignment");
         }
     }
 
@@ -209,7 +210,6 @@ public class AppMainPresenter {
         NavSubMenu<LeftNavItem> leftNavRoot = new NavSubMenu<>(LeftNavItem.MENU_ROOT);
         leftNavRoot.addNavElement(buildLeftNavProfileSubMenu());
         leftNavRoot.addNavElement(buildLeftNavMealsSubmenu());
-        leftNavRoot.addNavElement(buildLeftNavMealStatisticsSubmenu());
         leftNavRoot.addNavElement(new NavItem<>(LeftNavItem.EXPLORE_INGREDIENT_SWAPS));
         return leftNavRoot;
     }
@@ -229,17 +229,9 @@ public class AppMainPresenter {
         mealsSubMenu.addNavElement(new NavItem<>(LeftNavItem.LOG_MEAL));
         mealsSubMenu.addNavElement(new NavItem<>(LeftNavItem.VIEW_MULTIPLE_MEALS));
         mealsSubMenu.addNavElement(new NavItem<>(LeftNavItem.VIEW_SINGLE_MEAL));
+        mealsSubMenu.addNavElement(new NavItem<>(LeftNavItem.VIEW_NUTRIENT_BREAKDOWN));
+        mealsSubMenu.addNavElement(new NavItem<>(LeftNavItem.VIEW_FOOD_GUIDE_ALIGNMENT));
         return mealsSubMenu;
-    }
-
-    /**
-     * @return The meal statistics submenu for the left navigation bar.
-     */
-    private static INavElement<LeftNavItem> buildLeftNavMealStatisticsSubmenu() {
-        NavSubMenu<LeftNavItem> statisticsSubMenu = new NavSubMenu<>(LeftNavItem.MEAL_STATISTICS_SUBMENU);
-        statisticsSubMenu.addNavElement(new NavItem<>(LeftNavItem.VIEW_NUTRIENT_BREAKDOWN));
-        statisticsSubMenu.addNavElement(new NavItem<>(LeftNavItem.VIEW_SWAP_COMPARISON));
-        return statisticsSubMenu;
     }
 
     /**

@@ -19,8 +19,7 @@ public enum LeftNavItem {
 
     MEAL_STATISTICS_SUBMENU("Meal Statistics"),
     VIEW_NUTRIENT_BREAKDOWN("View Nutrient Breakdown"),
-    VIEW_SWAP_COMPARISON("View Swap Comparison"),
-
+    VIEW_FOOD_GUIDE_ALIGNMENT("Food Guide Alignment"),
     EXPLORE_INGREDIENT_SWAPS("Explore Swaps");
 
     private final String label;

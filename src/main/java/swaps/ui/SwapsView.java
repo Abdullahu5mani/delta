@@ -23,6 +23,7 @@ public class SwapsView extends JPanel {
     private final CreateGoalsView createGoalsView;
     private SelectSwapView selectSwapView;
     private SwapMealDetailsView swapMealDetailsView;
+    private SwapStatisticsView swapStatisticsView;
     private CardLayout cardLayout;
     private JPanel cardPanel;
     private JButton nextButton;
@@ -48,9 +49,10 @@ public class SwapsView extends JPanel {
         cardPanel.add(createGoalsView, SwapsPresenter.DEFINE_GOALS_CARD_ID);
         selectSwapView = new SelectSwapView();
         cardPanel.add(selectSwapView, SwapsPresenter.SELECT_SWAPS_CARD_ID);
-        cardPanel.add(new SwapStatisticsView(), SwapsPresenter.SWAP_STATISTICS_CARD_ID);
         swapMealDetailsView = new SwapMealDetailsView();
         cardPanel.add(swapMealDetailsView, SwapsPresenter.SWAP_MEAL_DETAILS_CARD_ID);
+        swapStatisticsView = new SwapStatisticsView();
+        cardPanel.add(swapStatisticsView, SwapsPresenter.SWAP_STATISTICS_CARD_ID);
         cardLayout.show(cardPanel, SwapsPresenter.DEFINE_GOALS_CARD_ID);
         this.add(cardPanel);
     }
@@ -126,5 +128,12 @@ public class SwapsView extends JPanel {
      */
     public SwapMealDetailsView getSwapMealDetailsView() {
         return swapMealDetailsView;
+    }
+
+    /**
+     * @return The view where the user can see swap statistics.
+     */
+    public SwapStatisticsView getSwapStatisticsView() {
+        return swapStatisticsView;
     }
 }

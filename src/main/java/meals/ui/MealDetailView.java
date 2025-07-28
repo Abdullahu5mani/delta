@@ -168,7 +168,7 @@ public class MealDetailView extends JPanel {
         infoPanel.add(quantityLabel);
         
         // Click instruction - smaller
-        JLabel clickLabel = new JLabel("📊");
+        JLabel clickLabel = new JLabel("🍁");
         clickLabel.setForeground(Color.BLUE);
         clickLabel.setFont(clickLabel.getFont().deriveFont(14f));
         clickLabel.setToolTipText("Click for nutrition info");

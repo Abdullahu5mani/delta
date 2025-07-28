@@ -1,6 +1,7 @@
 package statistics.service;
 
 import meals.models.food.Food;
+import meals.models.food.FoodGroup;
 import meals.models.food.Measure;
 import meals.models.meal.Meal;
 import meals.models.meal.MealItem;
@@ -10,8 +11,64 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
-public class StatisticsService {
+
+public class StatisticsService implements IStatisticsService {
+    
+    /**
+     * Canada Food Guide categories based on the 2019 recommendations.
+     */
+    public enum CanadaFoodGuideCategory {
+        VEGETABLES_AND_FRUITS("Vegetables & Fruits", 0.50), // 50%
+        WHOLE_GRAINS("Whole Grains", 0.25),                 // 25%
+        PROTEIN_FOODS("Protein Foods", 0.25),              // 25%
+        OTHER("Other", 0.0);                                // 0% (not part of CFG recommendations)
+        
+        private final String displayName;
+        private final double targetPercentage;
+        
+        CanadaFoodGuideCategory(String displayName, double targetPercentage) {
+            this.displayName = displayName;
+            this.targetPercentage = targetPercentage;
+        }
+        
+        public String getDisplayName() { return displayName; }
+        public double getTargetPercentage() { return targetPercentage; }
+    }
+    
+    /**
+     * Result of Canada Food Guide analysis.
+     */
+    public static class CFGAnalysisResult {
+        private final Map<CanadaFoodGuideCategory, Double> actualPercentages;
+        private final Map<CanadaFoodGuideCategory, Double> targetPercentages;
+        private final Map<CanadaFoodGuideCategory, Double> actualGrams;
+        private final double totalGrams;
+        private final List<String> unrecognizedFoods;
+        private final boolean hasDatasetLimitations;
+        
+        public CFGAnalysisResult(Map<CanadaFoodGuideCategory, Double> actualPercentages,
+                                Map<CanadaFoodGuideCategory, Double> targetPercentages,
+                                Map<CanadaFoodGuideCategory, Double> actualGrams,
+                                double totalGrams,
+                                List<String> unrecognizedFoods) {
+            this.actualPercentages = actualPercentages;
+            this.targetPercentages = targetPercentages;
+            this.actualGrams = actualGrams;
+            this.totalGrams = totalGrams;
+            this.unrecognizedFoods = unrecognizedFoods;
+            this.hasDatasetLimitations = true; // Our dataset is limited (9/22 food groups)
+        }
+        
+        public Map<CanadaFoodGuideCategory, Double> getActualPercentages() { return actualPercentages; }
+        public Map<CanadaFoodGuideCategory, Double> getTargetPercentages() { return targetPercentages; }
+        public Map<CanadaFoodGuideCategory, Double> getActualGrams() { return actualGrams; }
+        public double getTotalGrams() { return totalGrams; }
+        public List<String> getUnrecognizedFoods() { return unrecognizedFoods; }
+        public boolean hasDatasetLimitations() { return hasDatasetLimitations; }
+    }
+
     /**
      * Singleton instance of the service.
      */
@@ -33,9 +90,7 @@ public class StatisticsService {
         return instance;
     }
     
-    /**
-     * Converts nutrient amounts to grams for consistent comparison.
-     */
+    @Override
     public double convertToGrams(double value, String unit) {
         if (unit == null) return value;
         
@@ -55,9 +110,7 @@ public class StatisticsService {
         };
     }
     
-    /**
-     * Filters out water and bulk nutrients that would dominate the visualization.
-     */
+    @Override
     public boolean isWaterOrBulk(String nutrientName) {
         String name = nutrientName.toLowerCase();
         return name.contains("moisture") || 
@@ -68,9 +121,7 @@ public class StatisticsService {
                name.contains("energy") || name.contains("kcal");
     }
     
-    /**
-     * Checks if a nutrient is a bioactive compound that we track separately.
-     */
+    @Override
     public boolean isBioactiveCompound(String nutrientName) {
         String name = nutrientName.toLowerCase();
         return name.contains("alcohol") ||
@@ -80,10 +131,7 @@ public class StatisticsService {
                name.contains("kcal");
     }
     
-    /**
-     * Calculates totals for excluded bioactive compounds (alcohol, caffeine, theobromine, calories).
-     * These are tracked separately from main nutrition visualization.
-     */
+    @Override
     public Map<String, Double> calculateExcludedCompounds(List<Meal> meals) {
         Map<String, Double> excludedTotals = new HashMap<>();
         excludedTotals.put("alcohol", 0.0);
@@ -156,16 +204,12 @@ public class StatisticsService {
         return excludedTotals;
     }
     
-    /**
-     * Creates a formatted summary message for excluded compounds.
-     */
+    @Override
     public String getExcludedCompoundsSummary(Map<String, Double> excludedCompounds) {
         return getExcludedCompoundsSummary(excludedCompounds, 1.0);
     }
     
-    /**
-     * Creates a formatted summary message for excluded compounds with daily averaging.
-     */
+    @Override
     public String getExcludedCompoundsSummary(Map<String, Double> excludedCompounds, double numberOfDays) {
         double alcohol = excludedCompounds.getOrDefault("alcohol", 0.0);
         double caffeine = excludedCompounds.getOrDefault("caffeine", 0.0);
@@ -185,9 +229,7 @@ public class StatisticsService {
         }
     }
     
-    /**
-     * Calculates total nutrients from all meals, converting units to grams for comparison.
-     */
+    @Override
     public Map<String, Double> calculateNutrientTotalsFromMeals(List<Meal> meals) {
         Map<String, Double> allNutrientTotals = new HashMap<>();
         
@@ -260,12 +302,7 @@ public class StatisticsService {
         return getTopNutrientsWithOthers(allNutrientTotals, 7);
     }
     
-    /**
-     * Converts cumulative nutrient totals to daily averages.
-     * @param totals Cumulative nutrient totals
-     * @param numberOfDays Number of days in the selected range
-     * @return Daily average nutrient amounts
-     */
+    @Override
     public Map<String, Double> convertToDailyAverages(Map<String, Double> totals, double numberOfDays) {
         if (numberOfDays <= 0) {
             return totals; // Fallback to totals if invalid days
@@ -308,5 +345,190 @@ public class StatisticsService {
         }
         
         return result;
+    }
+    
+    /**
+     * Maps food groups to Canada Food Guide categories.
+     * Updated with more comprehensive mapping based on available CNF food groups.
+     */
+    public CanadaFoodGuideCategory mapFoodGroupToCFG(FoodGroup foodGroup) {
+        if (foodGroup == null || foodGroup.getFoodGroupName() == null) {
+            return null;
+        }
+        
+        String groupName = foodGroup.getFoodGroupName().toLowerCase();
+        
+        // NOTE: Our dataset is limited - we only have 9 out of 22 official CNF food groups
+        // Missing: Grains/Breads (Groups 1-4), Fruits (Group 9), Fish (Group 15), etc.
+        // This affects the accuracy of our Canada Food Guide analysis
+        
+        // Vegetables & Fruits (50%)
+        if (groupName.contains("vegetable") || groupName.contains("fruit")) {
+            return CanadaFoodGuideCategory.VEGETABLES_AND_FRUITS;
+        }
+        
+        // Whole Grains (25%) - includes cereals and grain-based foods
+        if (groupName.contains("cereal") || groupName.contains("grain") || 
+            groupName.contains("bread") || groupName.contains("pasta") ||
+            groupName.contains("breakfast")) {
+            return CanadaFoodGuideCategory.WHOLE_GRAINS;
+        }
+        
+        // Protein Foods (25%) - includes dairy, eggs, meat, poultry, fish
+        if (groupName.contains("dairy") || groupName.contains("egg") || 
+            groupName.contains("poultry") || groupName.contains("pork") ||
+            groupName.contains("beef") || groupName.contains("fish") ||
+            groupName.contains("legume") || groupName.contains("nut") ||
+            groupName.contains("meat") || groupName.contains("products")) {
+            return CanadaFoodGuideCategory.PROTEIN_FOODS;
+        }
+        
+        // Handle Mixed Dishes - categorize based on likely main component
+        if (groupName.contains("mixed")) {
+            // For mixed dishes, we'll assign them to the most likely category
+            // This is a simplification, but better than excluding them entirely
+            return CanadaFoodGuideCategory.PROTEIN_FOODS; // Most mixed dishes contain protein
+        }
+        
+        // Handle Beverages - categorize based on type
+        if (groupName.contains("beverages")) {
+            // We'll return null for most beverages but handle specific cases in food-level mapping
+            return null;
+        }
+        
+        // Categorize fats, oils, snacks, and other non-CFG foods as "Other"
+        if (groupName.contains("fats") || groupName.contains("oils") || 
+            groupName.contains("snacks")) {
+            return CanadaFoodGuideCategory.OTHER;
+        }
+        
+        // For any other unrecognized groups, categorize as "Other"
+        return CanadaFoodGuideCategory.OTHER;
+    }
+    
+    /**
+     * Maps individual foods to CFG categories when group-level mapping isn't sufficient.
+     */
+    public CanadaFoodGuideCategory mapFoodToCFG(Food food) {
+        // First try group-level mapping
+        CanadaFoodGuideCategory groupCategory = mapFoodGroupToCFG(food.getFoodGroup());
+        if (groupCategory != null) {
+            return groupCategory;
+        }
+        
+        // If group mapping returns null, try food-level mapping
+        String foodDescription = food.getFoodDescription().toLowerCase();
+        String groupName = food.getFoodGroup().getFoodGroupName().toLowerCase();
+        
+        // Special handling for beverages
+        if (groupName.contains("beverages")) {
+            // Milk-based beverages go to protein
+            if (foodDescription.contains("milk") || foodDescription.contains("dairy") || 
+                foodDescription.contains("chocolate") && foodDescription.contains("milk")) {
+                return CanadaFoodGuideCategory.PROTEIN_FOODS;
+            }
+            
+            // Fruit/vegetable juices go to vegetables & fruits
+            if (foodDescription.contains("juice") && !foodDescription.contains("coffee")) {
+                return CanadaFoodGuideCategory.VEGETABLES_AND_FRUITS;
+            }
+            
+            // Coffee, tea, soda, and other beverages go to "Other"
+            return CanadaFoodGuideCategory.OTHER;
+        }
+        
+        // Special handling for mixed dishes - try to categorize by main ingredient
+        if (groupName.contains("mixed")) {
+            // Dishes with chicken, beef, pork, turkey -> protein
+            if (foodDescription.contains("chicken") || foodDescription.contains("beef") || 
+                foodDescription.contains("pork") || foodDescription.contains("turkey") ||
+                foodDescription.contains("ham")) {
+                return CanadaFoodGuideCategory.PROTEIN_FOODS;
+            }
+            
+            // Dishes with potatoes, vegetables -> vegetables
+            if (foodDescription.contains("potato") || foodDescription.contains("vegetable") ||
+                foodDescription.contains("peas") || foodDescription.contains("corn")) {
+                return CanadaFoodGuideCategory.VEGETABLES_AND_FRUITS;
+            }
+            
+            // Default mixed dishes to protein (most contain some protein)
+            return CanadaFoodGuideCategory.PROTEIN_FOODS;
+        }
+        
+        // For other categories, keep them unrecognized
+        return null;
+    }
+    
+    /**
+     * Analyzes meals against Canada Food Guide recommendations.
+     */
+    public CFGAnalysisResult analyzeCanadaFoodGuide(List<Meal> meals) {
+        Map<CanadaFoodGuideCategory, Double> categoryTotals = new HashMap<>();
+        List<String> unrecognizedFoods = new ArrayList<>();
+        double totalGrams = 0.0;
+        
+        // Initialize category totals
+        for (CanadaFoodGuideCategory category : CanadaFoodGuideCategory.values()) {
+            categoryTotals.put(category, 0.0);
+        }
+        
+        System.out.println("Analyzing " + meals.size() + " meals for Canada Food Guide alignment...");
+        
+        for (Meal meal : meals) {
+            for (MealItem item : meal.getMealItems()) {
+                Food food = item.getFood();
+                double grams = convertMealItemToGrams(item);
+                
+                // Use enhanced food-level mapping
+                CanadaFoodGuideCategory category = mapFoodToCFG(food);
+                
+                if (category != null) {
+                    categoryTotals.merge(category, grams, Double::sum);
+                    System.out.println("MAPPED: " + food.getFoodDescription() + " -> " + category.getDisplayName() + " (" + grams + "g)");
+                } else {
+                    unrecognizedFoods.add(food.getFoodDescription() + " (" + food.getFoodGroup().getFoodGroupName() + ")");
+                    System.out.println("UNRECOGNIZED: " + food.getFoodDescription() + " in group: " + food.getFoodGroup().getFoodGroupName());
+                }
+                
+                totalGrams += grams;
+            }
+        }
+        
+        // Calculate percentages
+        Map<CanadaFoodGuideCategory, Double> percentages = new HashMap<>();
+        for (CanadaFoodGuideCategory category : CanadaFoodGuideCategory.values()) {
+            double grams = categoryTotals.get(category);
+            double percentage = totalGrams > 0 ? (grams / totalGrams) * 100 : 0.0;
+            percentages.put(category, percentage);
+        }
+        
+        // Get target percentages
+        Map<CanadaFoodGuideCategory, Double> targets = new HashMap<>();
+        for (CanadaFoodGuideCategory category : CanadaFoodGuideCategory.values()) {
+            targets.put(category, category.getTargetPercentage() * 100);
+        }
+        
+        System.out.println("CFG Analysis complete: " + totalGrams + "g total, " + unrecognizedFoods.size() + " unrecognized foods");
+        
+        return new CFGAnalysisResult(percentages, targets, categoryTotals, totalGrams, unrecognizedFoods);
+    }
+    
+    /**
+     * Converts a meal item to grams using existing conversion logic.
+     */
+    private double convertMealItemToGrams(MealItem item) {
+        try {
+            Measure measure = item.getSelectedMeasure();
+            if (measure != null) {
+                return item.getQuantity() * measure.getConversionValue();
+            } else {
+                // Fallback: assume quantity is already in grams
+                return item.getQuantity();
+            }
+        } catch (Exception e) {
+            System.err.println("Error converting meal item to grams: " + e.getMessage());
+            return item.getQuantity(); // Fallback
+        }
     }
 }
