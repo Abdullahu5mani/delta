@@ -7,6 +7,14 @@ import meals.ui.LogMealPresenter;
 import meals.ui.LogMealView;
 import meals.ui.MealListPresenter;
 import meals.ui.MealListView;
+import meals.ui.MealDetailView;
+import meals.ui.MealDetailPresenter;
+import meals.ui.MealStateManager;
+import meals.models.meal.Meal;
+
+import swaps.ui.SwapsPresenter;
+import swaps.ui.SwapsView;
+import swaps.ui.goals.CreateGoalsView;
 
 import profile.presenter.EditProfilePresenter;
 import profile.presenter.ProfileSelectorPresenter;
@@ -23,10 +31,6 @@ import shared.navigation.NavItem;
 import shared.navigation.NavSubMenu;
 import shared.navigation.NavigationPresenter;
 import shared.navigation.NavigationView;
-
-import swaps.ui.SwapsPresenter;
-import swaps.ui.SwapsView;
-import swaps.ui.goals.CreateGoalsView;
 
 /**
  * Presenter for the main UI of the app.
@@ -128,7 +132,7 @@ public class AppMainPresenter {
 
             case LOG_MEAL -> initializeLogMealView();
             case VIEW_MULTIPLE_MEALS -> initializeMealListView();
-            case VIEW_SINGLE_MEAL -> new PlaceholderView("Single Meal View");
+            case VIEW_SINGLE_MEAL -> initializeMealDetailView();
             case VIEW_NUTRIENT_BREAKDOWN -> initializeNutrientBreakdownView();
             case VIEW_SWAP_COMPARISON -> initializeSwapComparisonView();
             case EXPLORE_INGREDIENT_SWAPS -> initializeSwapsView();
@@ -157,6 +161,19 @@ public class AppMainPresenter {
         MealListView mealListView = new MealListView();
         new MealListPresenter(mealListView);
         return mealListView;
+    }
+    
+    private MealDetailView initializeMealDetailView() {
+        MealDetailView view = new MealDetailView();
+        new MealDetailPresenter(view);
+        
+        // Display the selected meal if available
+        Meal selectedMeal = MealStateManager.getInstance().getSelectedMeal();
+        if (selectedMeal != null) {
+            view.displayMeal(selectedMeal);
+        }
+        
+        return view;
     }
 
     /**

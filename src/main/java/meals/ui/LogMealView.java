@@ -189,7 +189,10 @@ public class LogMealView extends JPanel {
      * @return The selected measure for the meal item. (ex. "1 Cup")
      */
     protected Measure getSelectedMeasure() {
-        return (Measure) measureOptions.getSelectedItem();
+        Measure selectedMeasure = (Measure) measureOptions.getSelectedItem();
+        System.out.println("📏 getSelectedMeasure() called - Selected: " + (selectedMeasure != null ? selectedMeasure.getName() : "NULL"));
+        System.out.println("📏 Available measures count: " + measureOptions.getItemCount());
+        return selectedMeasure;
     }
 
     /**
@@ -198,12 +201,19 @@ public class LogMealView extends JPanel {
      * @param measures The list of measures to appear in the dropdown.
      */
     protected void setAvailableMeasures(List<Measure> measures) {
+        System.out.println("📏 Setting available measures - Count: " + measures.size());
         measureOptions.removeAllItems();
-        for (Measure measure: measures) {
+        for (int i = 0; i < measures.size(); i++) {
+            Measure measure = measures.get(i);
+            System.out.println("   " + (i+1) + ". " + measure.getName());
             measureOptions.addItem(measure);
         }
         if (!measures.isEmpty()) {
-            measureOptions.setSelectedItem(measures.getFirst());
+            Measure firstMeasure = measures.getFirst();
+            measureOptions.setSelectedItem(firstMeasure);
+            System.out.println("✅ Selected first measure: " + firstMeasure.getName());
+        } else {
+            System.out.println("⚠️ No measures available!");
         }
     }
 

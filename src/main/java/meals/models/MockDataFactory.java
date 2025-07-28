@@ -78,7 +78,7 @@ public class MockDataFactory {
             items.add(createMockMealItem(food, defaultMeasure, 1.0f));
         }
         int mealId = new Random().nextInt(10000);
-        return new Meal(mealId, mealType, items, new Date());
+        return new Meal(mealId, mealType, items, new Date(), 1); // Mock data uses user ID 1
     }
 
     public static void main(String[] args) {

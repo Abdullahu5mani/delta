@@ -69,18 +69,24 @@ public class Meal implements IRecord {
     private final MealType mealType;
     private final List<MealItem> mealItems;
     private final Date createdAt;
+    private final int userId;
 
     /**
      * @param id        The unique identifier of the meal.
      * @param mealType  The type of meal.
      * @param mealItems The list of items for the meal (foods and their respective quantities).
+     * @param createdAt The date when the meal was created.
+     * @param userId    The ID of the user who created the meal.
      */
-    public Meal(int id, MealType mealType, List<MealItem> mealItems, Date createdAt) {
+    public Meal(int id, MealType mealType, List<MealItem> mealItems, Date createdAt, int userId) {
         this.id = id;
         this.mealType = mealType;
         this.mealItems = mealItems;
         this.createdAt = createdAt;
+        this.userId = userId;
     }
+
+
 
     /**
      * @return The unique identifier of the meal.
@@ -110,6 +116,13 @@ public class Meal implements IRecord {
         return createdAt;
     }
 
+    /**
+     * @return The ID of the user who created the meal.
+     */
+    public int getUserId() {
+        return userId;
+    }
+
     @Override
     public String toString() {
         return "Meal(id: %s, mealType: %s, createdAt: %s)".formatted(id, mealType, createdAt);
@@ -117,12 +130,11 @@ public class Meal implements IRecord {
 
     @Override
     public Object getValue(String field) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return switch (field) {
             case "id" -> id;
             case "meal_type" -> mealType.toString();
-            case "user_id" -> 1; // TO DO: replace with current user
-            case "created_on" -> new SimpleDateFormat("yyyy-MM-dd").format(createdAt);
+            case "user_id" -> userId;
+            case "created_on" -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(createdAt);
             default -> null;
         };
     }

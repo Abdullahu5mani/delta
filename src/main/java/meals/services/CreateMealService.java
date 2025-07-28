@@ -8,6 +8,7 @@ import shared.AppBackend;
 import shared.service_output.ServiceError;
 import shared.service_output.ServiceOutput;
 import shared.utils.DateToString;
+import shared.utils.DateRangeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,9 +128,26 @@ public class CreateMealService {
      * @throws DatabaseException Thrown if a database error occurs when querying the meals.
      */
     private static boolean validateNoneOfSpecifiedMealType(Meal.MealType mealType, Date date) throws DatabaseException {
+        // Get current user ID
+        int currentUserId = 1; // Default fallback
+        try {
+            var currentUser = shared.ServiceFactory.getProfileService().getCurrentSession();
+            if (currentUser.isPresent()) {
+                currentUserId = currentUser.get().getId();
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: Error getting current user for validation: " + e.getMessage());
+        }
+        
+        // Create proper datetime range for validation using utility methods
+        Date startOfDay = DateRangeUtils.getStartOfDay(date);
+        Date endOfDay = DateRangeUtils.getEndOfDay(date);
+        
         List<IRecord> rawMeals = AppBackend.db().execute(
                 new SelectQuery("meals")
-                        .filter("created_on", Comparison.EQUAL, DateToString.call(date))
+                        .filter("created_on", Comparison.GREATER_EQUAL, DateToString.call(startOfDay))
+                        .filter("created_on", Comparison.LESS_EQUAL, DateToString.call(endOfDay))
+                        .filter("user_id", Comparison.EQUAL, currentUserId)
         );
         String mealTypeString = mealType.toString();
         long count = rawMeals

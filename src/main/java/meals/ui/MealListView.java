@@ -134,10 +134,25 @@ public class MealListView extends JPanel {
     protected record MealListItem(Meal meal) {
         @Override
         public String toString() {
-            return String.format("%s - %d item(s) [ID: %d]", 
+            // Format the creation time
+            java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm");
+            String timeString = timeFormat.format(meal.getCreatedAt());
+            
+            // Get the first few food names for a more descriptive display
+            String foodNames = meal.getMealItems().stream()
+                    .limit(2) // Show first 2 foods
+                    .map(item -> item.getFood().getFoodDescription())
+                    .reduce("", (a, b) -> a.isEmpty() ? b : a + ", " + b);
+            
+            if (meal.getMealItems().size() > 2) {
+                foodNames += " +" + (meal.getMealItems().size() - 2) + " more";
+            }
+            
+            return String.format("%s (%s) - %s [%d items]", 
                     meal.getMealType(), 
-                    meal.getMealItems().size(),
-                    meal.getId());
+                    timeString,
+                    foodNames.isEmpty() ? "No items" : foodNames,
+                    meal.getMealItems().size());
         }
     }
 } 

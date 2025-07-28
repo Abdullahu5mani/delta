@@ -13,6 +13,7 @@ import meals.models.food.Measure;
 public record SelectedFoodListItem(Food food, float quantity, Measure measure) {
     @Override
     public String toString() {
-        return "%s %.2f %s".formatted(food.getFoodDescription(), quantity, measure.getName());
+        String measureName = measure != null ? measure.getName() : "Unknown Measure";
+        return "%s %.2f %s".formatted(food.getFoodDescription(), quantity, measureName);
     }
 }

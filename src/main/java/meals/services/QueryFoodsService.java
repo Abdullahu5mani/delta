@@ -66,7 +66,14 @@ public class QueryFoodsService {
     public Food findById(int id) throws QueryFoodsServiceException {
         try {
             SelectQuery query = new SelectQuery(Food.getTableName()).filter("id", Comparison.EQUAL, id);
-            IRecord record = AppBackend.db().execute(query).getFirst();
+            List<IRecord> records = AppBackend.db().execute(query);
+            
+            if (records.isEmpty()) {
+                System.out.println("⚠️ Food not found with ID: " + id);
+                throw new QueryFoodsServiceException("Food not found with ID: " + id);
+            }
+            
+            IRecord record = records.getFirst();
             return buildFoodFromRecord(record);
         } catch (DatabaseException | QueryFoodGroupsService.QueryFoodGroupServiceException |
                  QueryNutrientsService.QueryNutrientServiceException e) {

@@ -213,7 +213,8 @@ public class SwapComparisonPresenter {
             1, 
             Meal.MealType.BREAKFAST, 
             List.of(chowMeinItem), 
-            new Date()
+            new Date(),
+            1  // demo user ID
         );
         
         return List.of(breakfast);
@@ -238,7 +239,8 @@ public class SwapComparisonPresenter {
             2, 
             Meal.MealType.BREAKFAST, 
             List.of(chowMeinItem), 
-            new Date()
+            new Date(),
+            1  // demo user ID
         );
         
         return List.of(breakfast);

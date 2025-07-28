@@ -13,6 +13,9 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.labels.StandardPieToolTipGenerator;
+import org.jfree.data.general.PieDataset;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -210,8 +213,19 @@ public class NutrientBreakdownPresenter {
                 return createNoDataPanel("No nutrient data available for the selected meals.");
             }
             
-            // Create visualization
-            return createVisualization(nutrientTotals, meals.size());
+            // Calculate number of days in the selected range
+            long daysDifference = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24) + 1;
+            double numberOfDays = Math.max(1.0, (double) daysDifference); // At least 1 day
+            
+            // Convert totals to daily averages
+            Map<String, Double> dailyNutrientAverages = StatisticsService.instance().convertToDailyAverages(nutrientTotals, numberOfDays);
+            
+            // Calculate excluded compounds (alcohol, caffeine, theobromine, calories)
+            Map<String, Double> excludedCompounds = StatisticsService.instance().calculateExcludedCompounds(meals);
+            Map<String, Double> dailyExcludedAverages = StatisticsService.instance().convertToDailyAverages(excludedCompounds, numberOfDays);
+            
+            // Create visualization with daily averages
+            return createVisualization(dailyNutrientAverages, meals.size(), dailyExcludedAverages, numberOfDays);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -222,9 +236,13 @@ public class NutrientBreakdownPresenter {
     /**
      * Creates the main visualization panel with pie chart and summary.
      */
-    private JPanel createVisualization(Map<String, Double> nutrientTotals, int mealCount) {
+    private JPanel createVisualization(Map<String, Double> nutrientTotals, int mealCount, Map<String, Double> excludedCompounds, double numberOfDays) {
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(BorderFactory.createTitledBorder("Nutrient Breakdown for Selected Meals"));
+        
+        String title = numberOfDays > 1 ? 
+            String.format("Daily Average Nutrient Distribution (%.0f days)", numberOfDays) :
+            "Nutrient Breakdown for Selected Meals";
+        mainPanel.setBorder(BorderFactory.createTitledBorder(title));
         
         // Calculate percentages for pie chart
         double totalWeight = nutrientTotals.values().stream().mapToDouble(Double::doubleValue).sum();
@@ -240,17 +258,36 @@ public class NutrientBreakdownPresenter {
             dataset.setValue(entry.getKey(), entry.getValue());
         }
         
+        String chartTitle = numberOfDays > 1 ? 
+            "Daily Average Nutrient Distribution" : 
+            "Nutrient Distribution by Weight";
+            
         JFreeChart chart = ChartFactory.createPieChart(
-                "Nutrient Distribution by Weight",
+                chartTitle,
                 dataset,
                 true, true, false
         );
+        
+        // Customize tooltips to show more useful information
+        PiePlot plot = (PiePlot) chart.getPlot();
+        plot.setToolTipGenerator(new StandardPieToolTipGenerator() {
+            @Override
+            public String generateToolTip(PieDataset dataset, Comparable key) {
+                String nutrientName = key.toString();
+                double percentage = dataset.getValue(key).doubleValue();
+                double weightInGrams = nutrientTotals.get(nutrientName);
+                
+                String unit = numberOfDays > 1 ? "g/day" : "g";
+                return String.format("<html><b>%s</b><br/>%.3f%s (%.1f%%)</html>", 
+                                   nutrientName, weightInGrams, unit, percentage);
+            }
+        });
         
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(600, 500));
         
         mainPanel.add(chartPanel, BorderLayout.CENTER);
-        mainPanel.add(createSummaryPanel(nutrientTotals, percentages, mealCount), BorderLayout.SOUTH);
+        mainPanel.add(createSummaryPanel(nutrientTotals, percentages, mealCount, excludedCompounds, numberOfDays), BorderLayout.SOUTH);
         
         return mainPanel;
     }
@@ -258,11 +295,17 @@ public class NutrientBreakdownPresenter {
     /**
      * Creates a summary panel showing top nutrients and meal information.
      */
-    private JPanel createSummaryPanel(Map<String, Double> totals, Map<String, Double> percentages, int mealCount) {
-        JPanel summaryPanel = new JPanel();
-        summaryPanel.setLayout(new BoxLayout(summaryPanel, BoxLayout.X_AXIS));
-        summaryPanel.setBorder(BorderFactory.createTitledBorder("Summary"));
-        summaryPanel.setPreferredSize(new Dimension(600, 90));
+    private JPanel createSummaryPanel(Map<String, Double> totals, Map<String, Double> percentages, int mealCount, Map<String, Double> excludedCompounds, double numberOfDays) {
+        JPanel mainSummaryPanel = new JPanel(new BorderLayout());
+        String summaryTitle = numberOfDays > 1 ? 
+            String.format("Daily Averages (%.0f days)", numberOfDays) : 
+            "Summary";
+        mainSummaryPanel.setBorder(BorderFactory.createTitledBorder(summaryTitle));
+        
+        // Top nutrients panel
+        JPanel topNutrientsPanel = new JPanel();
+        topNutrientsPanel.setLayout(new BoxLayout(topNutrientsPanel, BoxLayout.X_AXIS));
+        topNutrientsPanel.setPreferredSize(new Dimension(600, 70));
         
         // Show top 4 nutrients by weight
         List<Map.Entry<String, Double>> topNutrients = totals.entrySet().stream()
@@ -276,20 +319,45 @@ public class NutrientBreakdownPresenter {
             double percentage = percentages.get(nutrientName);
             double weight = entry.getValue();
             
+            String unit = numberOfDays > 1 ? "g/day" : "g";
             JLabel label = new JLabel(String.format(
-                    "<html><b>%s</b><br/>%.1f%% (%.3fg)</html>", 
-                    nutrientName, percentage, weight
+                    "<html><b>%s</b><br/>%.1f%% (%.3f%s)</html>", 
+                    nutrientName, percentage, weight, unit
             ));
             label.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
-            summaryPanel.add(label);
+            topNutrientsPanel.add(label);
         }
         
-        summaryPanel.add(Box.createHorizontalStrut(20));
-        JLabel mealCountLabel = new JLabel("Total Meals: " + mealCount);
+        topNutrientsPanel.add(Box.createHorizontalStrut(20));
+        String mealInfo = numberOfDays > 1 ? 
+            String.format("%.1f meals/day", (double)mealCount / numberOfDays) :
+            "Total Meals: " + mealCount;
+        JLabel mealCountLabel = new JLabel(mealInfo);
         mealCountLabel.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
-        summaryPanel.add(mealCountLabel);
+        topNutrientsPanel.add(mealCountLabel);
         
-        return summaryPanel;
+        // Excluded compounds panel with proper text wrapping
+        JPanel excludedPanel = new JPanel(new BorderLayout());
+        excludedPanel.setPreferredSize(new Dimension(600, 50));
+        
+        String excludedSummary = StatisticsService.instance().getExcludedCompoundsSummary(excludedCompounds, numberOfDays);
+        
+        // Create a properly sized text area for wrapping
+        JTextArea excludedTextArea = new JTextArea(excludedSummary);
+        excludedTextArea.setWrapStyleWord(true);
+        excludedTextArea.setLineWrap(true);
+        excludedTextArea.setOpaque(false);
+        excludedTextArea.setEditable(false);
+        excludedTextArea.setFocusable(false);
+        excludedTextArea.setFont(excludedTextArea.getFont().deriveFont(Font.ITALIC));
+        excludedTextArea.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
+        excludedPanel.add(excludedTextArea, BorderLayout.CENTER);
+        
+        mainSummaryPanel.add(topNutrientsPanel, BorderLayout.CENTER);
+        mainSummaryPanel.add(excludedPanel, BorderLayout.SOUTH);
+        
+        return mainSummaryPanel;
     }
     
     /**
